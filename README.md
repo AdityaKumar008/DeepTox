@@ -85,7 +85,8 @@ Return organ toxicity ratings         Feed to Random Forest model
                        │
                        ▼
               [Frontend — index.html]
-              Render clinical table + AI risk bars
+              Render 2D molecule structure (RDKit.js)
+              Clinical table + AI risk bars
               Overall risk verdict + PDF report
 ```
 
@@ -101,7 +102,8 @@ Return organ toxicity ratings         Feed to Random Forest model
 | **SMILES Resolver** | PubChemPy | Drug name → SMILES via PubChem API |
 | **Backend** | Flask + Flask-CORS | REST API connecting ML to frontend |
 | **Frontend** | HTML / CSS / JavaScript | Dark-themed SPA dashboard |
-| **PDF Reports** | jsPDF | Client-side report generation |
+| **Molecule Renderer** | RDKit.js | 2D chemical structure visualization in browser |
+| **PDF Reports** | jsPDF | Client-side clean white report generation |
 
 ---
 
@@ -244,14 +246,25 @@ Open `index.html` in your browser. The status badge in the bottom-right corner w
 
 ## Features
 
+### Core Analysis
 - 🔍 **Dual-source analysis** — Clinical FDA records + AI predictions side by side
 - 💊 **Drug name lookup** — Type any common name, PubChem resolves the structure automatically
 - 🧪 **SMILES support** — Directly input chemical structures for novel compounds
 - 📊 **Visual risk bars** — Color-coded probability bars for all 12 assay targets
+
+### Molecule Visualizer
+- ⚛️ **2D chemical structure rendering** — Live molecular diagram rendered in the browser using RDKit.js
+- 🔢 **Molecular properties** — Formula, molecular weight, heavy atom count, ring count, H-bond donors and acceptors
+- 📋 **Copy SMILES** — One-click copy of the resolved SMILES string
+
+### Usability
+- 🕓 **Search history** — Last 4 searches saved with risk level and timestamp, click any to re-run
 - 🌙 **Light / Dark mode** — Toggle with memory across sessions
-- ⬇️ **PDF report download** — Professionally formatted, downloadable report after every analysis
 - ⚡ **Smart fallback** — Demo mode when Flask isn't running, great for presentations
 - 📱 **Responsive design** — Works on desktop and mobile
+
+### Reports
+- ⬇️ **PDF report download** — Clean white A4 report with drug info, clinical table, AI risk bars, summary, and disclaimer — ready to print or share
 
 ---
 
