@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DeepTox — Hybrid AI Toxicity Prediction System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=IBM+Plex+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #040810;
+  --bg2:       #070d1a;
+  --bg3:       #0c1526;
+  --panel:     #0d1b2e;
+  --border:    #1a3050;
+  --green:     #00cc6a;
+  --green2:    #00aa55;
+  --cyan:      #00d4ff;
+  --amber:     #ffb300;
+  --red:       #ff4d6d;
+  --text:      #c8dff5;
+  --text2:     #7a9bbf;
+  --text3:     #3a5878;
+  --white:     #eaf4ff;
+  --nav-bg:    rgba(4,8,16,.9);
+  --font-head: 'Exo 2', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+/* ─── LIGHT MODE ─── */
+html.light {
+  --bg:        #f0f4f8;
+  --bg2:       #e2eaf2;
+  --bg3:       #d4e0ec;
+  --panel:     #ffffff;
+  --border:    #b8cfe4;
+  --green:     #008f4c;
+  --green2:    #006e3a;
+  --cyan:      #0077aa;
+  --amber:     #c47a00;
+  --red:       #cc2244;
+  --text:      #1a2e42;
+  --text2:     #3a5878;
+  --text3:     #7a9bbf;
+  --white:     #0d1b2e;
+  --nav-bg:    rgba(240,244,248,.92);
+}
+
+/* smooth theme transition */
+*, *::before, *::after { transition: background-color .25s, border-color .25s, color .15s; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.7; overflow-x: hidden; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+::selection { background: rgba(0,212,255,.25); color: var(--white); }
+
+/* ─── PAGES ─── */
+.page { display: none; min-height: 100vh; animation: fadeIn .4s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+/* ─── NAV ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: var(--nav-bg); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 64px;
+}
+.nav-logo { font-family: var(--font-head); font-weight: 900; font-size: 22px; color: var(--green); letter-spacing: 2px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.nav-logo span { color: var(--cyan); }
+.logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+.nav-links { display: flex; gap: 6px; }
+.nav-link { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; color: var(--text2); padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; background: transparent; transition: all .2s; position: relative; }
+.nav-link:hover, .nav-link.active { color: var(--cyan); background: rgba(0,212,255,.07); }
+.nav-link.active::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:20px; height:2px; background:var(--cyan); border-radius:1px; }
+
+/* ─── THEME TOGGLE ─── */
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.theme-toggle {
+  width: 44px; height: 24px; border-radius: 12px; cursor: pointer;
+  background: var(--bg3); border: 1px solid var(--border);
+  position: relative; transition: background .3s;
+  flex-shrink: 0;
+}
+.theme-toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--cyan); transition: transform .3s, background .3s;
+}
+html.light .theme-toggle::after { transform: translateX(20px); background: var(--amber); }
+.theme-icon { font-size: 14px; line-height: 1; pointer-events: none; position: absolute; top: 50%; transform: translateY(-50%); transition: opacity .2s; }
+.icon-moon { right: 6px; opacity: 1; }
+.icon-sun  { left:  5px; opacity: 0; }
+html.light .icon-moon { opacity: 0; }
+html.light .icon-sun  { opacity: 1; }
+
+.nav-cta { font-family: var(--font-mono); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; padding: 9px 22px; border-radius: 4px; background: transparent; border: 1px solid var(--green); color: var(--green); transition: all .2s; }
+.nav-cta:hover { background: var(--green); color: var(--bg); box-shadow: 0 0 20px rgba(0,255,136,.3); }
+
+/* ─── HERO ─── */
+.hero { min-height: 100vh; padding: 140px 80px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; position: relative; overflow: hidden; }
+.hero-bg { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 60% at 80% 40%, rgba(0,212,255,.06) 0%, transparent 60%), radial-gradient(ellipse 40% 40% at 20% 80%, rgba(0,255,136,.04) 0%, transparent 50%); }
+.grid-overlay { position:absolute; inset:0; pointer-events:none; background-image: linear-gradient(rgba(26,48,80,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(26,48,80,.3) 1px, transparent 1px); background-size: 60px 60px; mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%); }
+.hero-badge { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--cyan); border: 1px solid rgba(0,212,255,.3); border-radius: 20px; padding: 6px 16px; margin-bottom: 24px; background: rgba(0,212,255,.05); }
+.hero-title { font-family: var(--font-head); font-weight: 900; font-size: clamp(42px, 5vw, 72px); line-height: 1.05; color: var(--white); margin-bottom: 8px; letter-spacing: -1px; }
+.hero-title em { font-style: normal; color: var(--green); }
+.hero-subtitle { font-family: var(--font-head); font-weight: 300; font-size: clamp(18px, 2.5vw, 26px); color: var(--cyan); margin-bottom: 24px; letter-spacing: 1px; }
+.hero-desc { color: var(--text2); font-size: 16px; line-height: 1.8; max-width: 520px; margin-bottom: 40px; }
+.hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+.btn-primary { font-family: var(--font-mono); font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; padding: 14px 32px; border-radius: 4px; background: var(--green); border: none; color: var(--bg); font-weight: 500; transition: all .25s; box-shadow: 0 0 30px rgba(0,255,136,.25); }
+.btn-primary:hover { background: var(--green2); transform: translateY(-2px); box-shadow: 0 6px 40px rgba(0,255,136,.35); }
+.btn-secondary { font-family: var(--font-mono); font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; padding: 14px 32px; border-radius: 4px; background: transparent; border: 1px solid var(--border); color: var(--text); transition: all .25s; }
+.btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(0,212,255,.05); }
+.hero-stats { display: flex; gap: 40px; margin-top: 56px; padding-top: 40px; border-top: 1px solid var(--border); }
+.stat-item { display: flex; flex-direction: column; gap: 4px; }
+.stat-num { font-family: var(--font-head); font-weight: 900; font-size: 32px; color: var(--white); }
+.stat-num span { color: var(--green); }
+.stat-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); }
+.hero-visual { display: flex; align-items: center; justify-content: center; position: relative; }
+.molecule-wrap { position: relative; width: 420px; height: 420px; }
+.molecule-wrap svg { width: 100%; height: 100%; }
+.hex-ring { position: absolute; inset: 0; border: 1px solid rgba(0,212,255,.1); border-radius: 50%; animation: spin 20s linear infinite; }
+.hex-ring:nth-child(2) { inset: 20px; border-color: rgba(0,255,136,.08); animation-direction: reverse; animation-duration: 14s; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── SECTIONS ─── */
+.section { padding: 100px 80px; }
+.section-tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--green); margin-bottom: 14px; display: block; }
+.section-title { font-family: var(--font-head); font-weight: 800; font-size: clamp(28px, 3.5vw, 48px); color: var(--white); line-height: 1.1; margin-bottom: 16px; }
+.section-desc { color: var(--text2); font-size: 16px; max-width: 600px; line-height: 1.8; }
+.divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 0 80px; }
+
+/* ─── FEATURE CARDS ─── */
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 60px; }
+.feat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 36px 32px; position: relative; overflow: hidden; transition: all .3s; }
+.feat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); opacity: 0; transition: opacity .3s; }
+.feat-card:hover { border-color: rgba(0,212,255,.3); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+.feat-card:hover::before { opacity: 1; }
+.feat-icon { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 20px; background: rgba(0,212,255,.08); border: 1px solid rgba(0,212,255,.15); }
+.feat-title { font-family: var(--font-head); font-weight: 700; font-size: 18px; color: var(--white); margin-bottom: 10px; }
+.feat-desc { color: var(--text2); font-size: 14px; line-height: 1.7; }
+.feat-tag { display: inline-block; margin-top: 16px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; padding: 4px 10px; border-radius: 3px; background: rgba(0,255,136,.08); border: 1px solid rgba(0,255,136,.2); color: var(--green); text-transform: uppercase; }
+
+/* ─── ARCHITECTURE ─── */
+.arch-section { padding: 100px 80px; background: var(--bg2); }
+.arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 60px; }
+.arch-layer { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.arch-layer-head { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.layer-badge { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; padding: 4px 10px; border-radius: 3px; text-transform: uppercase; }
+.layer-badge.clinical { background: rgba(255,179,0,.1); color: var(--amber); border: 1px solid rgba(255,179,0,.2); }
+.layer-badge.ai { background: rgba(0,212,255,.1); color: var(--cyan); border: 1px solid rgba(0,212,255,.2); }
+.layer-title { font-family: var(--font-head); font-weight: 700; font-size: 17px; color: var(--white); }
+.arch-layer-body { padding: 28px; }
+.arch-item { display: flex; gap: 14px; margin-bottom: 20px; }
+.arch-item:last-child { margin-bottom: 0; }
+.arch-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+.arch-dot.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.arch-dot.cyan { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.arch-text { color: var(--text2); font-size: 14px; line-height: 1.7; }
+.arch-text strong { color: var(--text); font-weight: 500; }
+
+/* ─── HOW IT WORKS ─── */
+#page-how { padding-top: 80px; }
+.pipeline-hero { padding: 80px 80px 60px; }
+.pipeline-steps { padding: 40px 80px 100px; }
+.step-row { display: grid; grid-template-columns: 80px 1fr 1fr; gap: 0 40px; align-items: center; padding: 40px 0; border-bottom: 1px solid rgba(26,48,80,.5); }
+.step-row:last-child { border-bottom: none; }
+.step-num { font-family: var(--font-head); font-weight: 900; font-size: 52px; line-height: 1; user-select: none; background: linear-gradient(180deg, var(--text3), var(--bg3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.step-title { font-family: var(--font-head); font-weight: 700; font-size: 22px; color: var(--white); margin-bottom: 10px; }
+.step-desc { color: var(--text2); font-size: 15px; line-height: 1.8; }
+.step-code { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; font-family: var(--font-mono); font-size: 12px; color: var(--text2); line-height: 1.8; }
+.step-code .kw { color: var(--cyan); }
+.step-code .fn { color: var(--green); }
+.step-code .str { color: var(--amber); }
+.step-code .cm { color: var(--text3); }
+
+/* ─── TECHNOLOGY ─── */
+#page-tech { padding-top: 80px; }
+.tech-hero { padding: 80px 80px 60px; }
+.tech-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; padding: 40px 80px; }
+.tech-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 32px; transition: all .3s; }
+.tech-card:hover { border-color: rgba(0,212,255,.3); transform: translateY(-3px); }
+.tech-card-top { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.tech-logo { width: 52px; height: 52px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+.tech-logo.sklearn { background: rgba(255,179,0,.1); color: var(--amber); border: 1px solid rgba(255,179,0,.2); }
+.tech-logo.rdkit   { background: rgba(0,255,136,.1); color: var(--green); border: 1px solid rgba(0,255,136,.2); }
+.tech-logo.pandas  { background: rgba(0,212,255,.1); color: var(--cyan); border: 1px solid rgba(0,212,255,.2); }
+.tech-logo.pubchem { background: rgba(255,77,109,.08); color: var(--red); border: 1px solid rgba(255,77,109,.2); }
+.tech-card-name { font-family: var(--font-head); font-weight: 700; font-size: 20px; color: var(--white); }
+.tech-card-role { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); }
+.tech-card-desc { color: var(--text2); font-size: 14px; line-height: 1.8; }
+.tech-details { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.tech-pill { font-family: var(--font-mono); font-size: 10px; padding: 4px 10px; border-radius: 3px; background: var(--bg2); border: 1px solid var(--border); color: var(--text2); }
+.datasets-section { padding: 60px 80px 100px; }
+.ds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 50px; }
+.ds-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.ds-card-head { padding: 24px 28px; border-bottom: 1px solid var(--border); }
+.ds-name { font-family: var(--font-head); font-weight: 800; font-size: 22px; color: var(--white); margin-bottom: 6px; }
+.ds-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text3); letter-spacing: 1px; }
+.ds-card-body { padding: 28px; }
+.ds-stat { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(26,48,80,.4); }
+.ds-stat:last-child { border-bottom: none; }
+.ds-stat-key { color: var(--text2); font-size: 13px; }
+.ds-stat-val { font-family: var(--font-mono); font-size: 13px; color: var(--cyan); }
+.ds-card-foot { padding: 20px 28px; border-top: 1px solid var(--border); background: rgba(0,0,0,.2); }
+.ds-desc { color: var(--text2); font-size: 13px; line-height: 1.8; }
+
+/* ─── ANALYZE ─── */
+#page-analyze { padding-top: 80px; }
+.analyze-wrap { max-width: 940px; margin: 0 auto; padding: 80px 40px 100px; }
+.analyze-header { text-align: center; margin-bottom: 60px; }
+.search-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 40px; margin-bottom: 32px; }
+.search-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text2); display: block; margin-bottom: 14px; }
+.search-row { display: flex; gap: 12px; }
+.search-input { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 14px 20px; color: var(--white); font-family: var(--font-mono); font-size: 14px; outline: none; transition: border-color .2s; }
+.search-input::placeholder { color: var(--text3); }
+.search-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,212,255,.08); }
+.search-btn { padding: 14px 32px; background: var(--green); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-family: var(--font-mono); font-size: 13px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; transition: all .2s; white-space: nowrap; }
+.search-btn:hover { background: var(--green2); box-shadow: 0 4px 20px rgba(0,255,136,.3); }
+.search-btn:disabled { opacity: .5; cursor: not-allowed; }
+.search-hints { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.hint-chip { font-family: var(--font-mono); font-size: 11px; padding: 5px 12px; border-radius: 20px; cursor: pointer; background: rgba(0,212,255,.06); border: 1px solid rgba(0,212,255,.15); color: var(--cyan); transition: all .2s; }
+.hint-chip:hover { background: rgba(0,212,255,.12); }
+.type-toggle { display: flex; gap: 12px; margin-top: 20px; }
+.toggle-btn { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 7px 18px; border-radius: 4px; cursor: pointer; background: transparent; border: 1px solid var(--border); color: var(--text2); transition: all .2s; }
+.toggle-btn.active { border-color: var(--green); color: var(--green); background: rgba(0,255,136,.06); }
+
+/* ─── RESULTS ─── */
+.result-section { display: none; }
+.result-section.visible { display: block; animation: fadeIn .5s ease; }
+.result-header { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.result-name { font-family: var(--font-head); font-weight: 800; font-size: 28px; color: var(--white); }
+.result-formula { font-family: var(--font-mono); font-size: 11px; color: var(--text3); margin-top: 6px; word-break: break-all; max-width: 500px; }
+.risk-badge-lg { padding: 10px 24px; border-radius: 6px; font-family: var(--font-head); font-weight: 700; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
+.risk-badge-lg.safe     { background: rgba(0,255,136,.1); color: var(--green); border: 1px solid rgba(0,255,136,.3); }
+.risk-badge-lg.moderate { background: rgba(255,179,0,.1);  color: var(--amber); border: 1px solid rgba(255,179,0,.3); }
+.risk-badge-lg.high     { background: rgba(255,77,109,.1); color: var(--red);   border: 1px solid rgba(255,77,109,.3); }
+.results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+.result-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.result-card-head { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.result-card-head .icon { font-size: 16px; }
+.result-card-head h3 { font-family: var(--font-head); font-weight: 700; font-size: 15px; color: var(--white); }
+.result-card-head .source-tag { margin-left: auto; font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; }
+.source-tag.clinical { background: rgba(255,179,0,.1); color: var(--amber); border: 1px solid rgba(255,179,0,.2); }
+.source-tag.ai { background: rgba(0,212,255,.1); color: var(--cyan); border: 1px solid rgba(0,212,255,.2); }
+.result-card-body { padding: 24px; }
+
+/* Clinical rows with reasoning */
+.tox-row { padding: 12px 0; border-bottom: 1px solid rgba(26,48,80,.5); }
+.tox-row:last-child { border-bottom: none; }
+.tox-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.tox-organ { color: var(--text); font-size: 14px; font-weight: 500; }
+.tox-status { font-family: var(--font-mono); font-size: 11px; letter-spacing: .5px; padding: 3px 10px; border-radius: 3px; }
+.tox-status.toxic   { background: rgba(255,77,109,.1); color: var(--red);   border: 1px solid rgba(255,77,109,.2); }
+.tox-status.safe    { background: rgba(0,255,136,.1);  color: var(--green); border: 1px solid rgba(0,255,136,.2); }
+.tox-status.unknown { background: rgba(122,155,191,.08); color: var(--text2); border: 1px solid var(--border); }
+.tox-reasoning { font-family: var(--font-mono); font-size: 11px; color: var(--text3); line-height: 1.6; padding-left: 2px; }
+
+/* AI bars */
+.risk-bar-wrap { margin-bottom: 14px; }
+.risk-bar-label { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.risk-bar-name { font-size: 12px; color: var(--text); }
+.risk-bar-pct { font-family: var(--font-mono); font-size: 11px; color: var(--text2); }
+.risk-bar-track { height: 5px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+.risk-bar-fill { height: 100%; border-radius: 3px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+.risk-bar-fill.low { background: linear-gradient(90deg, var(--green2), var(--green)); }
+.risk-bar-fill.med { background: linear-gradient(90deg, #cc8800, var(--amber)); }
+.risk-bar-fill.hi  { background: linear-gradient(90deg, #cc2244, var(--red)); }
+
+.summary-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+.ai-note { font-size: 14px; color: var(--text2); line-height: 1.9; }
+
+.loading-state { display: none; text-align: center; padding: 60px 20px; }
+.loading-state.visible { display: block; }
+.spinner { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--green); animation: spin 1s linear infinite; margin: 0 auto 20px; }
+.loading-step { font-family: var(--font-mono); font-size: 12px; color: var(--text2); margin-top: 6px; }
+
+.error-card { background: rgba(255,77,109,.05); border: 1px solid rgba(255,77,109,.2); border-radius: 10px; padding: 28px 32px; display: none; }
+.error-card.visible { display: block; animation: fadeIn .3s ease; }
+.error-title { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--red); margin-bottom: 8px; }
+.error-msg { color: var(--text2); font-size: 14px; font-family: var(--font-mono); }
+
+.not-found-note { background: rgba(255,179,0,.05); border: 1px solid rgba(255,179,0,.15); border-radius: 6px; padding: 14px 18px; font-family: var(--font-mono); font-size: 12px; color: var(--amber); line-height: 1.7; }
+
+/* ─── ABOUT ─── */
+#page-about { padding-top: 80px; }
+.about-hero { padding: 80px 80px 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+.about-visual { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 40px; text-align: center; }
+.about-logo-big { font-family: var(--font-head); font-weight: 900; font-size: 72px; letter-spacing: -2px; background: linear-gradient(135deg, var(--green), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }
+.about-tagline { font-family: var(--font-mono); font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--text3); }
+.about-version { display: inline-block; margin-top: 20px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.5px; padding: 6px 16px; border-radius: 20px; background: rgba(0,255,136,.07); border: 1px solid rgba(0,255,136,.2); color: var(--green); }
+.mission-section { padding: 60px 80px 100px; }
+.mission-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 50px; }
+.mission-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 32px; text-align: center; }
+.mission-icon { font-size: 32px; margin-bottom: 16px; }
+.mission-title { font-family: var(--font-head); font-weight: 700; font-size: 17px; color: var(--white); margin-bottom: 10px; }
+.mission-text { color: var(--text2); font-size: 14px; line-height: 1.7; }
+.faq-section { padding: 60px 80px 100px; background: var(--bg2); }
+.faq-list { margin-top: 50px; max-width: 800px; }
+.faq-item { border-bottom: 1px solid var(--border); padding: 24px 0; }
+.faq-q { font-family: var(--font-head); font-weight: 600; font-size: 17px; color: var(--white); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.faq-a { color: var(--text2); font-size: 15px; line-height: 1.8; margin-top: 12px; display: none; }
+.faq-a.open { display: block; animation: fadeIn .3s ease; }
+.faq-chevron { color: var(--cyan); font-size: 18px; transition: transform .3s; }
+.faq-chevron.open { transform: rotate(180deg); }
+
+/* ─── ACKNOWLEDGEMENTS ─── */
+#page-ack { padding-top: 80px; }
+.ack-hero { padding: 80px 80px 60px; }
+.ack-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 0 80px 60px; }
+.ack-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 32px; transition: all .3s; }
+.ack-card:hover { border-color: rgba(0,212,255,.3); transform: translateY(-3px); }
+.ack-card-icon { font-size: 30px; margin-bottom: 16px; }
+.ack-card-title { font-family: var(--font-head); font-weight: 700; font-size: 17px; color: var(--white); margin-bottom: 8px; }
+.ack-card-sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cyan); margin-bottom: 12px; }
+.ack-card-desc { color: var(--text2); font-size: 13px; line-height: 1.8; }
+.ack-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 20px 80px 60px; }
+.ack-disclaimer { margin: 0 80px 100px; background: rgba(255,179,0,.04); border: 1px solid rgba(255,179,0,.15); border-radius: 10px; padding: 36px 40px; }
+.ack-disclaimer-title { font-family: var(--font-head); font-weight: 700; font-size: 18px; color: var(--amber); margin-bottom: 12px; }
+.ack-disclaimer-text { color: var(--text2); font-size: 14px; line-height: 1.9; }
+.ack-libs { padding: 0 80px 80px; }
+.libs-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 32px; }
+.lib-badge { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px 16px; text-align: center; }
+.lib-name { font-family: var(--font-head); font-weight: 700; font-size: 14px; color: var(--white); margin-bottom: 4px; }
+.lib-ver { font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
+.lib-role { font-size: 12px; color: var(--text2); margin-top: 6px; }
+
+/* ─── FOOTER ─── */
+footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 60px 80px 40px; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; margin-bottom: 60px; }
+.footer-logo { font-family: var(--font-head); font-weight: 900; font-size: 24px; color: var(--green); letter-spacing: 2px; margin-bottom: 12px; }
+.footer-tagline { color: var(--text2); font-size: 14px; line-height: 1.8; max-width: 280px; }
+.footer-col-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 20px; }
+.footer-link { display: block; color: var(--text2); font-size: 14px; margin-bottom: 10px; cursor: pointer; transition: color .2s; }
+.footer-link:hover { color: var(--cyan); }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 30px; border-top: 1px solid var(--border); }
+.footer-copy { font-family: var(--font-mono); font-size: 12px; color: var(--text3); }
+.footer-badges { display: flex; gap: 10px; }
+.footer-badge { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; padding: 4px 10px; border-radius: 3px; background: var(--bg3); border: 1px solid var(--border); color: var(--text3); }
+
+/* ─── STATUS BAR ─── */
+.status-bar { position: fixed; bottom: 20px; right: 20px; z-index: 2000; font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; padding: 8px 16px; border-radius: 20px; display: flex; align-items: center; gap: 8px; transition: all .3s; pointer-events: none; }
+.status-bar.online  { background: rgba(0,255,136,.1); border: 1px solid rgba(0,255,136,.3); color: var(--green); }
+.status-bar.offline { background: rgba(255,179,0,.08); border: 1px solid rgba(255,179,0,.2);  color: var(--amber); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.status-bar.online  .status-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-bar.offline .status-dot { background: var(--amber); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; padding: 120px 30px 60px; }
+  .hero-visual { display: none; }
+  .section, .pipeline-hero, .pipeline-steps, .tech-hero, .datasets-section, .mission-section, .faq-section, .ack-hero, .ack-libs, .ack-disclaimer { padding-left: 30px; padding-right: 30px; }
+  .features-grid, .arch-grid, .results-grid, .tech-grid, .ds-grid, .mission-grid, .ack-grid { grid-template-columns: 1fr; padding-left: 30px; padding-right: 30px; }
+  .libs-grid { grid-template-columns: repeat(2,1fr); }
+  .about-hero { grid-template-columns: 1fr; padding: 60px 30px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  footer { padding: 40px 30px; }
+  .step-row { grid-template-columns: 60px 1fr; }
+  .step-code { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ STATUS BAR ═══ -->
+<div class="status-bar offline" id="statusBar">
+  <div class="status-dot"></div>
+  <span id="statusText">DEMO MODE</span>
+</div>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">
+    <div class="logo-dot"></div>
+    DEEP<span>TOX</span>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link active"  onclick="showPage('home')">Home</button>
+    <button class="nav-link"         onclick="showPage('how')">How It Works</button>
+    <button class="nav-link"         onclick="showPage('tech')">Technology</button>
+    <button class="nav-link"         onclick="showPage('about')">About</button>
+    <button class="nav-link"         onclick="showPage('ack')">Acknowledgements</button>
+  </div>
+  <div class="nav-right">
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+      <span class="theme-icon icon-moon">🌙</span>
+      <span class="theme-icon icon-sun">☀️</span>
+    </div>
+    <button class="nav-cta" onclick="showPage('analyze')">▶ Analyze</button>
+  </div>
+</nav>
+
+<!-- ═══════════ HOME ═══════════ -->
+<div id="page-home" class="page active">
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="grid-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge">⬡ Hybrid AI · Clinical + ML</div>
+      <div class="hero-title"><em>DEEP</em>TOX</div>
+      <div class="hero-subtitle">Hybrid AI Toxicity Prediction System</div>
+      <p class="hero-desc">A two-layer safety architecture that bridges verified FDA clinical records with machine-learning predictions from NIH Tox21 data — giving you answers no single model can.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="showPage('analyze')">▶ Analyze a Compound</button>
+        <button class="btn-secondary" onclick="showPage('how')">How It Works →</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item"><div class="stat-num">2<span>+</span></div><div class="stat-label">Safety Layers</div></div>
+        <div class="stat-item"><div class="stat-num">12<span>K+</span></div><div class="stat-label">Tox21 Compounds</div></div>
+        <div class="stat-item"><div class="stat-num">12</div><div class="stat-label">Assay Targets</div></div>
+        <div class="stat-item"><div class="stat-num">FDA</div><div class="stat-label">Verified Records</div></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="molecule-wrap">
+        <div class="hex-ring"></div><div class="hex-ring"></div>
+        <svg viewBox="0 0 420 420" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="glow1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#00ff88" stop-opacity=".7"/><stop offset="100%" stop-color="#00ff88" stop-opacity="0"/></radialGradient>
+            <filter id="blur1"><feGaussianBlur stdDeviation="3"/></filter>
+          </defs>
+          <circle cx="210" cy="210" r="60" fill="url(#glow1)" filter="url(#blur1)" opacity=".4"/>
+          <g stroke="#1a3050" stroke-width="1" fill="none">
+            <polygon points="210,150 255,177 255,232 210,260 165,232 165,177"/>
+            <polygon points="210,90 285,132 285,217 210,260 135,217 135,132"/>
+          </g>
+          <g stroke="#00d4ff" stroke-width="1.5" opacity=".6">
+            <line x1="210" y1="150" x2="210" y2="90"/><line x1="255" y1="177" x2="300" y2="152"/>
+            <line x1="255" y1="232" x2="300" y2="257"/><line x1="210" y1="260" x2="210" y2="318"/>
+            <line x1="165" y1="232" x2="120" y2="257"/><line x1="165" y1="177" x2="120" y2="152"/>
+          </g>
+          <g fill="#0c1526" stroke="#00d4ff" stroke-width="1.5">
+            <circle cx="210" cy="82" r="10"/><circle cx="308" cy="143" r="10"/>
+            <circle cx="308" cy="265" r="10"/><circle cx="210" cy="326" r="10"/>
+            <circle cx="112" cy="265" r="10"/><circle cx="112" cy="143" r="10"/>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="9" fill="#00d4ff" text-anchor="middle" dominant-baseline="middle">
+            <text x="210" y="82">C</text><text x="308" y="143">N</text><text x="308" y="265">O</text>
+            <text x="210" y="326">C</text><text x="112" y="265">H</text><text x="112" y="143">N</text>
+          </g>
+          <g fill="#0c1526" stroke="#00ff88" stroke-width="1.5">
+            <circle cx="210" cy="150" r="8"/><circle cx="255" cy="177" r="8"/>
+            <circle cx="255" cy="232" r="8"/><circle cx="210" cy="260" r="8"/>
+            <circle cx="165" cy="232" r="8"/><circle cx="165" cy="177" r="8"/>
+          </g>
+          <circle cx="210" cy="210" r="18" fill="#040810" stroke="#00ff88" stroke-width="2"/>
+          <circle cx="210" cy="210" r="14" fill="rgba(0,255,136,.1)"/>
+          <text x="210" y="210" font-family="IBM Plex Mono" font-size="10" fill="#00ff88" text-anchor="middle" dominant-baseline="middle" font-weight="bold">C</text>
+          <circle r="4" fill="#00d4ff" opacity=".9"><animateMotion dur="4s" repeatCount="indefinite"><mpath href="#orbit1"/></animateMotion></circle>
+          <path id="orbit1" d="M 210,140 A 70,70 0 1,1 209.9,140" fill="none"/>
+          <circle r="3" fill="#00ff88" opacity=".8"><animateMotion dur="6s" repeatCount="indefinite" begin="2s"><mpath href="#orbit2"/></animateMotion></circle>
+          <path id="orbit2" d="M 210,100 A 110,110 0 1,0 209.9,100" fill="none"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="section">
+    <span class="section-tag">Core Capabilities</span>
+    <h2 class="section-title">Two Layers.<br/>Zero Blind Spots.</h2>
+    <p class="section-desc">DeepTox's dual-source architecture eliminates the flaws of relying on any single data source.</p>
+    <div class="features-grid">
+      <div class="feat-card"><div class="feat-icon">🏥</div><div class="feat-title">Clinical Intelligence</div><div class="feat-desc">Searches real FDA drug labels from the UniTox dataset — if physicians have already documented organ damage, you'll know immediately with full clinical reasoning.</div><div class="feat-tag">In-Vivo · Human Data</div></div>
+      <div class="feat-card"><div class="feat-icon">🧠</div><div class="feat-title">AI Prediction Engine</div><div class="feat-desc">A Random Forest classifier trained on Tox21 compounds evaluates cellular toxicity across 12 biological assay targets — including nuclear receptors and stress responses.</div><div class="feat-tag">ML · Tox21 · NIH</div></div>
+      <div class="feat-card"><div class="feat-icon">🔬</div><div class="feat-title">Cheminformatics Layer</div><div class="feat-desc">RDKit converts SMILES codes into 2048-bit Morgan molecular fingerprints — the mathematical barcode the AI model reads to understand chemical structure.</div><div class="feat-tag">RDKit · Fingerprints</div></div>
+      <div class="feat-card"><div class="feat-icon">🔍</div><div class="feat-title">Smart Drug Lookup</div><div class="feat-desc">Type a common drug name. PubChemPy silently queries PubChem to retrieve the canonical SMILES structure automatically — no chemistry knowledge required.</div><div class="feat-tag">PubChem · API</div></div>
+      <div class="feat-card"><div class="feat-icon">📊</div><div class="feat-title">Side-by-Side Results</div><div class="feat-desc">Clinical records with doctor reasoning and ML risk predictions are shown together — see both what physicians have verified and what the AI predicts simultaneously.</div><div class="feat-tag">Dashboard · Visual</div></div>
+      <div class="feat-card"><div class="feat-icon">⚡</div><div class="feat-title">Flask REST API</div><div class="feat-desc">The Python backend exposes a clean Flask REST endpoint. This frontend calls it directly — start the server and get live predictions instantly.</div><div class="feat-tag">Flask · REST API</div></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="arch-section">
+    <span class="section-tag">Architecture</span>
+    <h2 class="section-title">The Hybrid Safety Stack</h2>
+    <p class="section-desc">Two independent systems that cover each other's blind spots.</p>
+    <div class="arch-grid">
+      <div class="arch-layer">
+        <div class="arch-layer-head"><span class="layer-badge clinical">Layer 1</span><span class="layer-title">The Clinical Doctor</span></div>
+        <div class="arch-layer-body">
+          <div class="arch-item"><div class="arch-dot green"></div><div class="arch-text"><strong>Data Source:</strong> UniTox.csv — FDA drug labels with physician-documented organ toxicity (Heart, Liver, Kidney, Lungs, Fertility).</div></div>
+          <div class="arch-item"><div class="arch-dot green"></div><div class="arch-text"><strong>Method:</strong> Pandas DataFrame lookup matching the drug name against verified clinical records — returns rating + doctor reasoning.</div></div>
+          <div class="arch-item"><div class="arch-dot green"></div><div class="arch-text"><strong>Strength:</strong> 100% authoritative for known drugs. Real human outcomes, not simulated results.</div></div>
+          <div class="arch-item"><div class="arch-dot green"></div><div class="arch-text"><strong>Weakness:</strong> Cannot assess novel compounds — only works for drugs already present in the database.</div></div>
+        </div>
+      </div>
+      <div class="arch-layer">
+        <div class="arch-layer-head"><span class="layer-badge ai">Layer 2</span><span class="layer-title">The AI Chemist</span></div>
+        <div class="arch-layer-body">
+          <div class="arch-item"><div class="arch-dot cyan"></div><div class="arch-text"><strong>Data Source:</strong> Tox21 dataset — compounds tested against 12 nuclear receptor and stress-response assays in vitro.</div></div>
+          <div class="arch-item"><div class="arch-dot cyan"></div><div class="arch-text"><strong>Method:</strong> RDKit generates 2048-bit Morgan fingerprints. A Random Forest model returns probability scores per assay target.</div></div>
+          <div class="arch-item"><div class="arch-dot cyan"></div><div class="arch-text"><strong>Strength:</strong> Can evaluate any chemical structure — including brand-new compounds with no clinical history.</div></div>
+          <div class="arch-item"><div class="arch-dot cyan"></div><div class="arch-text"><strong>Weakness:</strong> Probabilistic, not certain. In-vitro results don't always translate to in-vivo human responses.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-grid">
+      <div><div class="footer-logo">DEEPTOX</div><p class="footer-tagline">A hybrid AI toxicity prediction system bridging FDA clinical records and NIH machine learning data.</p></div>
+      <div><div class="footer-col-title">Navigate</div><span class="footer-link" onclick="showPage('home')">Home</span><span class="footer-link" onclick="showPage('analyze')">Analyze</span><span class="footer-link" onclick="showPage('how')">How It Works</span></div>
+      <div><div class="footer-col-title">Project</div><span class="footer-link" onclick="showPage('tech')">Technology</span><span class="footer-link" onclick="showPage('about')">About</span><span class="footer-link" onclick="showPage('ack')">Acknowledgements</span></div>
+      <div><div class="footer-col-title">Datasets</div><span class="footer-link">UniTox (FDA)</span><span class="footer-link">Tox21 (NIH)</span><span class="footer-link">PubChem</span></div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2025 DeepTox · Research Prototype · Not for clinical use</div>
+      <div class="footer-badges"><span class="footer-badge">FLASK API</span><span class="footer-badge">TOX21</span><span class="footer-badge">UNITOX</span></div>
+    </div>
+  </footer>
+</div>
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<div id="page-how" class="page">
+  <div class="pipeline-hero">
+    <span class="section-tag">System Flow</span>
+    <h1 class="section-title">How DeepTox Works</h1>
+    <p class="section-desc">A step-by-step walkthrough — from the moment you type a drug name to the final toxicity dashboard.</p>
+  </div>
+  <div class="pipeline-steps">
+    <div class="step-row">
+      <div class="step-num">01</div>
+      <div class="step-info"><div class="step-title">User Input</div><div class="step-desc">The user provides a common drug name (e.g. "Aspirin") or a raw SMILES code. Both are accepted. A toggle on the frontend tells the backend which format to expect.</div></div>
+      <div class="step-code"><span class="cm"># Two accepted formats</span><br/>name&nbsp;&nbsp;= <span class="str">"Aspirin"</span><br/><span class="cm"># OR</span><br/>smiles = <span class="str">"CC(=O)Oc1ccccc1C(=O)O"</span></div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">02</div>
+      <div class="step-info"><div class="step-title">SMILES Resolution via PubChem</div><div class="step-desc">If a name is typed, PubChemPy calls the PubChem REST API to retrieve the canonical isomeric SMILES. If SMILES was directly provided, this step is skipped entirely.</div></div>
+      <div class="step-code"><span class="kw">import</span> pubchempy <span class="kw">as</span> pcp<br/>results = pcp.<span class="fn">get_compounds</span>(name, <span class="str">'name'</span>)<br/>smiles = results[<span class="num">0</span>].isomeric_smiles</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">03</div>
+      <div class="step-info"><div class="step-title">Clinical Database Scan (UniTox)</div><div class="step-desc">Pandas searches UniTox.csv for the drug name. If found, it returns physician-verified toxicity ratings and clinical reasoning for Heart, Liver, Kidney, Lungs, and Fertility.</div></div>
+      <div class="step-code">df = pd.<span class="fn">read_csv</span>(<span class="str">'UniTox.csv'</span>)<br/>match = df[df[<span class="str">'Clean_Name'</span>] == name.<span class="fn">lower</span>()]<br/><span class="cm"># Binary Rating + Reasoning per organ</span></div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">04</div>
+      <div class="step-info"><div class="step-title">Molecular Fingerprinting (RDKit)</div><div class="step-desc">RDKit parses the SMILES string into a molecule object, then generates a 2048-bit Morgan fingerprint (radius=2) — a dense binary vector encoding each atom's chemical neighborhood.</div></div>
+      <div class="step-code"><span class="kw">from</span> rdkit.Chem <span class="kw">import</span> rdFingerprintGenerator<br/>mfpgen = rdFingerprintGenerator.<span class="fn">GetMorganGenerator</span>(<br/>&nbsp;&nbsp;radius=<span class="num">2</span>, fpSize=<span class="num">2048</span>)<br/>fp = mfpgen.<span class="fn">GetFingerprintAsNumPy</span>(mol)</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">05</div>
+      <div class="step-info"><div class="step-title">Random Forest Prediction (Tox21)</div><div class="step-desc">The fingerprint is passed to the trained Random Forest model. It returns probability scores for 12 assay targets — nuclear receptors (NR) and stress response pathways (SR).</div></div>
+      <div class="step-code">model = joblib.<span class="fn">load</span>(<span class="str">'tox21_model.joblib'</span>)<br/>probs = model.<span class="fn">predict_proba</span>(fp)<br/><span class="cm"># Returns list of [p_safe, p_toxic] per assay</span></div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">06</div>
+      <div class="step-info"><div class="step-title">Unified JSON Response (Flask)</div><div class="step-desc">Flask compiles both layers into a single JSON response — clinical organ ratings with reasoning, AI risk percentages per assay, and an overall risk level — sent to the frontend.</div></div>
+      <div class="step-code"><span class="fn">return</span> jsonify({<br/>&nbsp;&nbsp;<span class="str">"clinical"</span>: {<span class="str">"found"</span>: <span class="kw">true</span>, <span class="str">"organs"</span>: [...]},<br/>&nbsp;&nbsp;<span class="str">"ai_risks"</span>: [{<span class="str">"effect"</span>:..., <span class="str">"risk_pct"</span>:...}],<br/>&nbsp;&nbsp;<span class="str">"overall_risk"</span>: <span class="str">"moderate"</span><br/>})</div>
+    </div>
+  </div>
+  <footer style="background:var(--bg2);border-top:1px solid var(--border);padding:30px 80px;display:flex;justify-content:space-between;align-items:center;">
+    <span style="font-family:var(--font-mono);font-size:12px;color:var(--text3);">© 2025 DeepTox · Research Prototype</span>
+    <button class="btn-primary" onclick="showPage('analyze')" style="padding:10px 24px;font-size:12px;">Try It Now →</button>
+  </footer>
+</div>
+
+<!-- ═══════════ ANALYZE ═══════════ -->
+<div id="page-analyze" class="page">
+  <div class="analyze-wrap">
+    <div class="analyze-header">
+      <span class="section-tag" style="display:block;text-align:center;">Toxicity Engine</span>
+      <h1 class="section-title" style="text-align:center;">Analyze a Compound</h1>
+      <p class="section-desc" style="margin:0 auto;text-align:center;">Enter a drug name or SMILES code to run the full hybrid analysis.</p>
+    </div>
+
+    <div class="search-card">
+      <label class="search-label">Compound Input</label>
+      <div class="search-row">
+        <input class="search-input" id="compoundInput" placeholder="e.g. Aspirin · Ibuprofen · CC(=O)Oc1ccccc1C(=O)O" type="text" onkeydown="if(event.key==='Enter') runAnalysis()"/>
+        <button class="search-btn" id="analyzeBtn" onclick="runAnalysis()">Analyze</button>
+      </div>
+      <div class="type-toggle">
+        <button class="toggle-btn active" id="btn-name"   onclick="setType('name')">Drug Name</button>
+        <button class="toggle-btn"        id="btn-smiles" onclick="setType('smiles')">SMILES Code</button>
+      </div>
+      <div class="search-hints">
+        <span class="hint-chip" onclick="fillAndAnalyze('Aspirin')">Aspirin</span>
+        <span class="hint-chip" onclick="fillAndAnalyze('Ibuprofen')">Ibuprofen</span>
+        <span class="hint-chip" onclick="fillAndAnalyze('Metformin')">Metformin</span>
+        <span class="hint-chip" onclick="fillAndAnalyze('Acetaminophen')">Acetaminophen</span>
+        <span class="hint-chip" onclick="fillAndAnalyze('Warfarin')">Warfarin</span>
+        <span class="hint-chip" onclick="fillAndAnalyze('Cisplatin')">Cisplatin</span>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" id="loadingState">
+      <div class="spinner"></div>
+      <div style="font-family:var(--font-mono);font-size:14px;color:var(--text2);" id="loadingMsg">Running hybrid analysis...</div>
+      <div class="loading-step" id="loadingStep">Querying UniTox + Tox21 ML model</div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-card" id="errorCard">
+      <div class="error-title">⚠ Analysis Failed</div>
+      <div class="error-msg" id="errorMsg">—</div>
+    </div>
+
+    <!-- Results -->
+    <div class="result-section" id="resultSection">
+      <div class="result-header">
+        <div>
+          <div class="result-name" id="resultName">—</div>
+          <div class="result-formula" id="resultFormula">SMILES: —</div>
+        </div>
+        <div class="risk-badge-lg" id="overallBadge">—</div>
+      </div>
+
+      <div class="results-grid">
+        <!-- Clinical -->
+        <div class="result-card">
+          <div class="result-card-head">
+            <span class="icon">🏥</span><h3>Clinical Records</h3>
+            <span class="source-tag clinical">UniTox · FDA</span>
+          </div>
+          <div class="result-card-body" id="clinicalBody"></div>
+        </div>
+        <!-- AI -->
+        <div class="result-card">
+          <div class="result-card-head">
+            <span class="icon">🧠</span><h3>AI Predictions</h3>
+            <span class="source-tag ai">Tox21 · RF Model</span>
+          </div>
+          <div class="result-card-body" id="aiBody"></div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="result-card-head"><span class="icon">📋</span><h3>Analysis Summary</h3></div>
+        <div class="result-card-body"><p class="ai-note" id="summaryText">—</p></div>
+      </div>
+    </div>
+
+    <!-- Demo notice (shown only in demo mode) -->
+    <div id="demoNotice" style="margin-top:20px;background:rgba(255,179,0,.05);border:1px solid rgba(255,179,0,.2);border-radius:8px;padding:20px 24px;display:none;">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin-bottom:8px;">⚠ Demo Mode — Flask Not Detected</div>
+      <div style="color:var(--text2);font-size:13px;line-height:1.8;">To get <strong style="color:var(--white);">real predictions</strong> from your model, start your Flask server:<br/>
+      <code style="font-family:var(--font-mono);font-size:12px;color:var(--cyan);background:var(--bg2);padding:4px 10px;border-radius:4px;display:inline-block;margin-top:8px;">cd backend &nbsp;→&nbsp; pip install flask flask-cors &nbsp;→&nbsp; python app.py</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TECHNOLOGY ═══════════ -->
+<div id="page-tech" class="page">
+  <div class="tech-hero"><span class="section-tag">Tech Stack</span><h1 class="section-title">Built With Precision</h1><p class="section-desc">Every tool chosen for a specific role. No redundancy. No bloat.</p></div>
+  <div class="tech-grid">
+    <div class="tech-card"><div class="tech-card-top"><div class="tech-logo sklearn">sk</div><div><div class="tech-card-name">scikit-learn</div><div class="tech-card-role">The Brain · ML Engine</div></div></div><div class="tech-card-desc">Powers the Random Forest Classifier trained on the Tox21 dataset. Returns per-assay toxicity probabilities via <code style="font-family:var(--font-mono);font-size:12px;color:var(--amber)">predict_proba()</code>. Model serialized with joblib for fast loading.</div><div class="tech-details"><span class="tech-pill">RandomForestClassifier</span><span class="tech-pill">predict_proba()</span><span class="tech-pill">joblib</span><span class="tech-pill">MultiOutput</span></div></div>
+    <div class="tech-card"><div class="tech-card-top"><div class="tech-logo rdkit">rd</div><div><div class="tech-card-name">RDKit</div><div class="tech-card-role">The Chemist · Fingerprinting</div></div></div><div class="tech-card-desc">Parses SMILES strings into molecule objects, validates structural validity, and generates 2048-bit Morgan fingerprints with radius=2 — the numerical vector the ML model reads.</div><div class="tech-details"><span class="tech-pill">SMILES parsing</span><span class="tech-pill">Morgan FP</span><span class="tech-pill">radius=2, bits=2048</span><span class="tech-pill">rdFingerprintGenerator</span></div></div>
+    <div class="tech-card"><div class="tech-card-top"><div class="tech-logo pandas">pd</div><div><div class="tech-card-name">Pandas</div><div class="tech-card-role">Database Manager</div></div></div><div class="tech-card-desc">Manages the UniTox clinical dataset. Performs fast case-insensitive string matching on drug names and extracts organ-specific Binary Ratings and clinical Reasoning columns.</div><div class="tech-details"><span class="tech-pill">DataFrame</span><span class="tech-pill">CSV I/O</span><span class="tech-pill">str.lower() match</span><span class="tech-pill">UniTox.csv</span></div></div>
+    <div class="tech-card"><div class="tech-card-top"><div class="tech-logo pubchem">pc</div><div><div class="tech-card-name">PubChemPy</div><div class="tech-card-role">SMILES Resolver</div></div></div><div class="tech-card-desc">Calls the PubChem REST API to translate common drug names into canonical SMILES codes automatically — so users never need to know chemical notation to use the system.</div><div class="tech-details"><span class="tech-pill">PubChem API</span><span class="tech-pill">get_compounds()</span><span class="tech-pill">isomeric_smiles</span></div></div>
+  </div>
+  <div class="datasets-section">
+    <span class="section-tag">Datasets</span><h2 class="section-title">Two Respected Data Sources</h2><p class="section-desc">Chosen for scientific authority, coverage, and rigor.</p>
+    <div class="ds-grid">
+      <div class="ds-card"><div class="ds-card-head"><div class="ds-name">UniTox</div><div class="ds-meta">CLINICAL · IN-VIVO · FDA DRUG LABELS</div></div><div class="ds-card-body"><div class="ds-stat"><span class="ds-stat-key">Data Type</span><span class="ds-stat-val">Human · Real-world</span></div><div class="ds-stat"><span class="ds-stat-key">Source</span><span class="ds-stat-val">FDA Drug Labels</span></div><div class="ds-stat"><span class="ds-stat-key">Organs Covered</span><span class="ds-stat-val">Heart, Liver, Kidney, Lungs, Fertility</span></div><div class="ds-stat"><span class="ds-stat-key">Annotations</span><span class="ds-stat-val">Binary Rating + Doctor Reasoning</span></div></div><div class="ds-card-foot"><div class="ds-desc">Real FDA label data with physician-documented reasoning for organ toxicities. This is ground-truth in-vivo data — what actually happened to human patients.</div></div></div>
+      <div class="ds-card"><div class="ds-card-head"><div class="ds-name">Tox21</div><div class="ds-meta">ML TRAINING · IN-VITRO · NIH / EPA</div></div><div class="ds-card-body"><div class="ds-stat"><span class="ds-stat-key">Data Type</span><span class="ds-stat-val">Experimental · Lab</span></div><div class="ds-stat"><span class="ds-stat-key">Source</span><span class="ds-stat-val">NIH / EPA / NCATS</span></div><div class="ds-stat"><span class="ds-stat-key">Compounds</span><span class="ds-stat-val">12,707</span></div><div class="ds-stat"><span class="ds-stat-key">Assay Targets</span><span class="ds-stat-val">12 (NR + SR pathways)</span></div></div><div class="ds-card-foot"><div class="ds-desc">NIH's Tox21 initiative dataset. Tests chemicals against nuclear receptors and stress-response pathways in cell cultures. The gold standard for ML-based toxicity prediction.</div></div></div>
+    </div>
+  </div>
+  <footer style="background:var(--bg2);border-top:1px solid var(--border);padding:30px 80px;display:flex;justify-content:space-between;align-items:center;"><span style="font-family:var(--font-mono);font-size:12px;color:var(--text3);">© 2025 DeepTox · Research Prototype</span><button class="btn-primary" onclick="showPage('analyze')" style="padding:10px 24px;font-size:12px;">Try It Now →</button></footer>
+</div>
+
+<!-- ═══════════ ABOUT ═══════════ -->
+<div id="page-about" class="page">
+  <div class="about-hero">
+    <div>
+      <span class="section-tag">The Project</span>
+      <h1 class="section-title">What is DeepTox?</h1>
+      <p style="color:var(--text2);font-size:16px;line-height:1.9;margin-bottom:24px;">DeepTox is a research-grade hybrid toxicity prediction system that addresses a fundamental limitation: neither clinical databases nor AI models alone can give you the full picture.</p>
+      <p style="color:var(--text2);font-size:16px;line-height:1.9;margin-bottom:24px;">Clinical databases know what's already dangerous — but they're blind to novel compounds. AI models can predict new risks — but lack the authority of verified human data. DeepTox runs both simultaneously and presents their findings side by side.</p>
+      <p style="color:var(--text2);font-size:16px;line-height:1.9;">The system is built entirely in Python, with scikit-learn, RDKit, Pandas, PubChemPy, and Flask forming the core stack. The frontend is a custom dark-themed single-page application with a glassmorphic medical dashboard aesthetic.</p>
+    </div>
+    <div class="about-visual">
+      <div class="about-logo-big">DT</div>
+      <div class="about-tagline">Hybrid AI Toxicity System</div>
+      <div class="about-version">v1.0 · Research Build</div>
+      <div style="margin-top:28px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);padding-bottom:10px;"><span>ML Framework</span><span style="color:var(--cyan);font-family:var(--font-mono);">scikit-learn</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);padding-bottom:10px;"><span>Chem Library</span><span style="color:var(--cyan);font-family:var(--font-mono);">RDKit</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);padding-bottom:10px;"><span>Backend</span><span style="color:var(--cyan);font-family:var(--font-mono);">Flask + CORS</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);"><span>Datasets</span><span style="color:var(--cyan);font-family:var(--font-mono);">UniTox · Tox21</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="mission-section">
+    <span class="section-tag">Design Philosophy</span><h2 class="section-title">Why It Was Built This Way</h2>
+    <div class="mission-grid">
+      <div class="mission-card"><div class="mission-icon">🔗</div><div class="mission-title">Bridge the Gap</div><div class="mission-text">Most tools rely on a single data source. DeepTox deliberately combines verified human outcomes with predictive AI to cover what each method misses independently.</div></div>
+      <div class="mission-card"><div class="mission-icon">🎯</div><div class="mission-title">Honest Uncertainty</div><div class="mission-text">The system clearly labels "verified by doctors" vs "predicted by AI" — because the confidence level and nature of evidence from each source is fundamentally different.</div></div>
+      <div class="mission-card"><div class="mission-icon">⚗️</div><div class="mission-title">Novel Compound Ready</div><div class="mission-text">For chemicals with no clinical history, the AI layer provides a meaningful first-pass risk estimate based on structural similarity to thousands of tested compounds.</div></div>
+    </div>
+  </div>
+  <div class="faq-section">
+    <span class="section-tag">FAQ</span><h2 class="section-title">Common Questions</h2>
+    <div class="faq-list">
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Can DeepTox be used for real medical decisions? <span class="faq-chevron">▾</span></div><div class="faq-a">No. DeepTox is a research prototype. It is not a validated clinical tool and must never be used to make medical decisions for any individual. Always consult qualified medical professionals.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">What does "not found in UniTox" mean? <span class="faq-chevron">▾</span></div><div class="faq-a">It means the drug is not present in the UniTox dataset being used — not that it is safe. In this case, DeepTox relies entirely on the Layer 2 AI prediction from the Tox21 model.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">What are the 12 Tox21 assay targets? <span class="faq-chevron">▾</span></div><div class="faq-a">The 12 targets cover nuclear receptors (NR-AR, NR-AhR, NR-Aromatase, NR-ER, NR-ER-LBD, NR-PPAR-gamma) and stress response pathways (SR-ARE, SR-ATAD5, SR-HSE, SR-MMP, SR-p53, SR-Mitochondrial). Each represents a biological pathway that toxic chemicals can disrupt.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Why does the frontend show demo data sometimes? <span class="faq-chevron">▾</span></div><div class="faq-a">If the Flask backend server isn't running at http://127.0.0.1:5000, the frontend falls back to demo data to remain usable for presentation purposes. Start the backend with <code style="font-family:var(--font-mono);font-size:12px;">python app.py</code> for live predictions.</div></div>
+    </div>
+  </div>
+  <footer style="background:var(--bg);border-top:1px solid var(--border);padding:30px 80px;display:flex;justify-content:space-between;align-items:center;"><span style="font-family:var(--font-mono);font-size:12px;color:var(--text3);">© 2025 DeepTox · Research Prototype · Not for clinical use</span><button class="btn-primary" onclick="showPage('analyze')" style="padding:10px 24px;font-size:12px;">Try It Now →</button></footer>
+</div>
+
+<!-- ═══════════ ACKNOWLEDGEMENTS ═══════════ -->
+<div id="page-ack" class="page">
+  <div class="ack-hero">
+    <span class="section-tag">Credits & Sources</span>
+    <h1 class="section-title">Acknowledgements</h1>
+    <p class="section-desc">DeepTox would not exist without the open scientific datasets, open-source libraries, and research communities listed here. We are grateful for their work.</p>
+  </div>
+
+  <div class="ack-grid">
+    <div class="ack-card">
+      <div class="ack-card-icon">🧬</div>
+      <div class="ack-card-title">Tox21 Initiative</div>
+      <div class="ack-card-sub">NIH · EPA · NCATS · FDA</div>
+      <div class="ack-card-desc">The Tox21 program, a collaboration between the National Institutes of Health, EPA, and FDA, generated the in-vitro toxicology dataset used to train the core AI model in this project. Their work in high-throughput screening has advanced predictive toxicology significantly.</div>
+    </div>
+    <div class="ack-card">
+      <div class="ack-card-icon">🏥</div>
+      <div class="ack-card-title">UniTox Dataset</div>
+      <div class="ack-card-sub">FDA Drug Label Annotations</div>
+      <div class="ack-card-desc">The UniTox clinical database provides physician-documented organ toxicity ratings and reasoning derived from FDA drug labels. This real-world, in-vivo dataset forms the authoritative clinical backbone of DeepTox's Layer 1 analysis.</div>
+    </div>
+    <div class="ack-card">
+      <div class="ack-card-icon">🔬</div>
+      <div class="ack-card-title">PubChem</div>
+      <div class="ack-card-sub">NIH National Library of Medicine</div>
+      <div class="ack-card-desc">PubChem is the world's largest collection of freely accessible chemical information. DeepTox uses the PubChem REST API (via PubChemPy) to resolve common drug names into canonical SMILES structures at runtime.</div>
+    </div>
+    <div class="ack-card">
+      <div class="ack-card-icon">⚛️</div>
+      <div class="ack-card-title">RDKit</div>
+      <div class="ack-card-sub">Open-Source Cheminformatics</div>
+      <div class="ack-card-desc">RDKit is the leading open-source cheminformatics library. It powers the molecular fingerprint generation pipeline in DeepTox — converting SMILES strings into the mathematical vectors the machine learning model understands.</div>
+    </div>
+    <div class="ack-card">
+      <div class="ack-card-icon">🤖</div>
+      <div class="ack-card-title">scikit-learn</div>
+      <div class="ack-card-sub">Machine Learning in Python</div>
+      <div class="ack-card-desc">The scikit-learn library provides the Random Forest Classifier at the heart of DeepTox's AI prediction layer. Its consistent, well-documented API made training, serializing, and deploying the multi-output Tox21 model straightforward.</div>
+    </div>
+    <div class="ack-card">
+      <div class="ack-card-icon">🌐</div>
+      <div class="ack-card-title">Flask</div>
+      <div class="ack-card-sub">Python Web Framework</div>
+      <div class="ack-card-desc">Flask provides the lightweight REST API layer that connects the Python ML pipeline to this web frontend. Its minimalist design makes it ideal for research prototypes that need a clean HTTP interface without unnecessary overhead.</div>
+    </div>
+  </div>
+
+  <div class="ack-divider"></div>
+
+  <div class="ack-libs">
+    <span class="section-tag">Python Libraries Used</span>
+    <h2 class="section-title" style="font-size:28px;">Full Dependency List</h2>
+    <div class="libs-grid">
+      <div class="lib-badge"><div class="lib-name">pandas</div><div class="lib-ver">≥ 1.5</div><div class="lib-role">Data management</div></div>
+      <div class="lib-badge"><div class="lib-name">numpy</div><div class="lib-ver">≥ 1.23</div><div class="lib-role">Numerical arrays</div></div>
+      <div class="lib-badge"><div class="lib-name">scikit-learn</div><div class="lib-ver">≥ 1.2</div><div class="lib-role">ML model</div></div>
+      <div class="lib-badge"><div class="lib-name">rdkit</div><div class="lib-ver">≥ 2023</div><div class="lib-role">Cheminformatics</div></div>
+      <div class="lib-badge"><div class="lib-name">pubchempy</div><div class="lib-ver">≥ 1.0</div><div class="lib-role">SMILES resolver</div></div>
+      <div class="lib-badge"><div class="lib-name">joblib</div><div class="lib-ver">≥ 1.2</div><div class="lib-role">Model I/O</div></div>
+      <div class="lib-badge"><div class="lib-name">flask</div><div class="lib-ver">≥ 3.0</div><div class="lib-role">REST API</div></div>
+      <div class="lib-badge"><div class="lib-name">flask-cors</div><div class="lib-ver">≥ 4.0</div><div class="lib-role">Cross-origin</div></div>
+    </div>
+    <div style="margin-top:24px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px 24px;font-family:var(--font-mono);font-size:13px;color:var(--text2);">
+      Install all dependencies:<br/>
+      <span style="color:var(--green);">pip install</span> <span style="color:var(--amber);">flask flask-cors pandas numpy scikit-learn joblib pubchempy rdkit-pypi</span>
+    </div>
+  </div>
+
+  <div class="ack-disclaimer">
+    <div class="ack-disclaimer-title">⚠ Research Prototype Disclaimer</div>
+    <div class="ack-disclaimer-text">DeepTox is an academic research prototype developed for educational and exploratory purposes only. The predictions generated by this system — whether from the clinical database layer or the AI prediction layer — are <strong style="color:var(--white);">not validated for clinical use</strong> and must not be used to make any medical, pharmaceutical, or safety decisions for any individual or organization. The AI model's predictions are probabilistic estimates based on in-vitro laboratory data and may not reflect in-vivo human responses. Always consult qualified medical and toxicology professionals for any real-world assessment.</div>
+  </div>
+
+  <footer style="background:var(--bg2);border-top:1px solid var(--border);padding:30px 80px;display:flex;justify-content:space-between;align-items:center;"><span style="font-family:var(--font-mono);font-size:12px;color:var(--text3);">© 2025 DeepTox · Research Prototype · Not for clinical use</span><button class="btn-primary" onclick="showPage('analyze')" style="padding:10px 24px;font-size:12px;">Try It Now →</button></footer>
+</div>
+
+<!-- ═══════════ SCRIPT ═══════════ -->
+<script>
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  localStorage.setItem('deeptox-theme', isLight ? 'light' : 'dark');
+}
+// Restore saved theme on load
+if (localStorage.getItem('deeptox-theme') === 'light') {
+  document.documentElement.classList.add('light');
+}
+
+// ── Config ───────────────────────────────────────────────────────────────────
+const API_BASE = "http://127.0.0.1:5000";  // ← your Flask server address
+let inputType  = 'name';
+let isLive     = false;  // flips to true once /health confirms Flask is running
+
+// ── Check Flask on load ───────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(2500) });
+    if (r.ok) {
+      isLive = true;
+      document.getElementById('statusBar').className = 'status-bar online';
+      document.getElementById('statusText').textContent = 'FLASK LIVE';
+    }
+  } catch { /* server not running — stay in demo mode */ }
+}
+checkHealth();
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const labels = { home:'Home', how:'How It Works', tech:'Technology', about:'About', ack:'Acknowledgements', analyze:'' };
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('active', l.textContent.trim() === (labels[id] || '__'));
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setType(t) {
+  inputType = t;
+  document.getElementById('btn-name').classList.toggle('active', t === 'name');
+  document.getElementById('btn-smiles').classList.toggle('active', t === 'smiles');
+  document.getElementById('compoundInput').placeholder = t === 'name'
+    ? 'e.g. Aspirin · Ibuprofen · Metformin'
+    : 'e.g. CC(=O)Oc1ccccc1C(=O)O';
+}
+
+function fillAndAnalyze(name) {
+  setType('name');
+  document.getElementById('compoundInput').value = name;
+  runAnalysis();
+}
+
+// ── Loading steps display ────────────────────────────────────────────────────
+const STEPS = [
+  'Looking up SMILES from PubChem...',
+  'Scanning UniTox clinical database...',
+  'Generating RDKit molecular fingerprint...',
+  'Running Random Forest model on Tox21...',
+  'Compiling results...',
+];
+function animateLoadingSteps() {
+  let i = 0;
+  const el = document.getElementById('loadingStep');
+  return setInterval(() => {
+    el.textContent = STEPS[i % STEPS.length];
+    i++;
+  }, 900);
+}
+
+// ── Main analyze function ─────────────────────────────────────────────────────
+async function runAnalysis() {
+  const compound = document.getElementById('compoundInput').value.trim();
+  if (!compound) return;
+
+  // Reset UI
+  document.getElementById('loadingState').classList.add('visible');
+  document.getElementById('resultSection').classList.remove('visible');
+  document.getElementById('errorCard').classList.remove('visible');
+  document.getElementById('demoNotice').style.display = 'none';
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  const stepTimer = animateLoadingSteps();
+
+  let data;
+  let usedDemo = false;
+
+  // Re-check health before each call
+  await checkHealth();
+
+  if (isLive) {
+    // ── LIVE MODE ─────────────────────────────────────────────────────────────
+    try {
+      const resp = await fetch(`${API_BASE}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ compound, input_type: inputType }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `Server responded with ${resp.status}`);
+      }
+      data = await resp.json();
+    } catch (e) {
+      clearInterval(stepTimer);
+      document.getElementById('loadingState').classList.remove('visible');
+      document.getElementById('errorCard').classList.add('visible');
+      document.getElementById('errorMsg').textContent = e.message;
+      btn.disabled = false;
+      return;
+    }
+  } else {
+    // ── DEMO MODE ─────────────────────────────────────────────────────────────
+    await new Promise(r => setTimeout(r, 1800));
+    data = generateDemoData(compound);
+    usedDemo = true;
+  }
+
+  clearInterval(stepTimer);
+  document.getElementById('loadingState').classList.remove('visible');
+  if (usedDemo) document.getElementById('demoNotice').style.display = 'block';
+  renderResults(data);
+  btn.disabled = false;
+}
+
+// ── Render results ────────────────────────────────────────────────────────────
+function renderResults(data) {
+  document.getElementById('resultName').textContent    = data.name || '—';
+  document.getElementById('resultFormula').textContent = 'SMILES: ' + (data.smiles || '—');
+
+  // Overall badge
+  const badge = document.getElementById('overallBadge');
+  const risk  = (data.overall_risk || 'unknown').toLowerCase();
+  badge.textContent = risk.toUpperCase() + ' RISK';
+  badge.className   = 'risk-badge-lg ' + (risk === 'safe' ? 'safe' : risk === 'high' ? 'high' : 'moderate');
+
+  // ── Clinical card ──────────────────────────────────────────────────────────
+  const clinBody = document.getElementById('clinicalBody');
+  const clinical = data.clinical || {};
+
+  if (!clinical.found) {
+    clinBody.innerHTML = `
+      <div class="not-found-note">
+        Not found in UniTox clinical database.<br/>
+        This drug may be novel, unlisted, or entered under a different name.<br/>
+        AI prediction is the sole data source for this compound.
+      </div>`;
+  } else {
+    clinBody.innerHTML = (clinical.organs || []).map(org => `
+      <div class="tox-row">
+        <div class="tox-row-top">
+          <span class="tox-organ">${org.name}</span>
+          <span class="tox-status ${org.rating}">${capitalise(org.rating)}</span>
+        </div>
+        ${org.reasoning && org.reasoning !== 'No details available.' && org.reasoning !== 'nan'
+          ? `<div class="tox-reasoning">${org.reasoning}</div>` : ''}
+      </div>`).join('');
+  }
+
+  // ── AI card ────────────────────────────────────────────────────────────────
+  const aiBody  = document.getElementById('aiBody');
+  const aiRisks = data.ai_risks || [];
+
+  if (aiRisks.length === 0) {
+    aiBody.innerHTML = `<div style="color:var(--text2);font-size:13px;font-family:var(--font-mono);">AI model data unavailable.</div>`;
+  } else {
+    aiBody.innerHTML = aiRisks.map(r => {
+      const pct = r.risk_pct ?? 0;
+      const cls = pct > 50 ? 'hi' : pct > 25 ? 'med' : 'low';
+      const label = r.effect || r.assay || '—';
+      return `
+        <div class="risk-bar-wrap">
+          <div class="risk-bar-label">
+            <span class="risk-bar-name">${label}</span>
+            <span class="risk-bar-pct">${pct.toFixed(1)}%</span>
+          </div>
+          <div class="risk-bar-track">
+            <div class="risk-bar-fill ${cls}" style="width:0%" data-target="${pct}%"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Animate bars after render
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.risk-bar-fill[data-target]').forEach(el => {
+        setTimeout(() => { el.style.width = el.dataset.target; }, 80);
+      });
+    });
+  }
+
+  // ── Summary ────────────────────────────────────────────────────────────────
+  const found     = clinical.found;
+  const toxOrgans = found ? (clinical.organs || []).filter(o => o.rating === 'toxic').map(o => o.name) : [];
+  const highRisk  = (aiRisks).filter(r => (r.risk_pct ?? 0) > 50).map(r => r.effect || r.assay);
+  let summary = `${data.name}: Clinical records ${found ? 'found in UniTox' : 'not found in UniTox database'}. `;
+  if (found && toxOrgans.length > 0) summary += `Physician records show toxicity in: ${toxOrgans.join(', ')}. `;
+  if (highRisk.length > 0) summary += `AI model flags high risk (>50%) for: ${highRisk.join(', ')}. `;
+  summary += risk === 'high' ? 'Overall assessment: HIGH RISK — significant toxicity signals detected across multiple sources.'
+           : risk === 'moderate' ? 'Overall assessment: MODERATE RISK — some toxicity signals present. Further evaluation recommended.'
+           : 'Overall assessment: LOW RISK — minimal toxicity signals detected across both data sources.';
+  document.getElementById('summaryText').textContent = summary;
+
+  document.getElementById('resultSection').classList.add('visible');
+}
+
+// ── Demo fallback data ────────────────────────────────────────────────────────
+function generateDemoData(name) {
+  const map = {
+    aspirin:       { organs:[{n:'Heart',r:'toxic'},{n:'Liver',r:'safe'},{n:'Kidney',r:'safe'},{n:'Lungs',r:'safe'},{n:'Fertility',r:'safe'}], overall:'moderate', aiMult:0.35 },
+    ibuprofen:     { organs:[{n:'Heart',r:'toxic'},{n:'Liver',r:'safe'},{n:'Kidney',r:'toxic'},{n:'Lungs',r:'safe'},{n:'Fertility',r:'safe'}], overall:'high',     aiMult:0.60 },
+    metformin:     { organs:[{n:'Heart',r:'safe'},{n:'Liver',r:'safe'},{n:'Kidney',r:'safe'},{n:'Lungs',r:'safe'},{n:'Fertility',r:'safe'}],   overall:'safe',     aiMult:0.10 },
+    acetaminophen: { organs:[{n:'Heart',r:'safe'},{n:'Liver',r:'toxic'},{n:'Kidney',r:'safe'},{n:'Lungs',r:'safe'},{n:'Fertility',r:'safe'}],  overall:'moderate', aiMult:0.30 },
+    warfarin:      { organs:[{n:'Heart',r:'safe'},{n:'Liver',r:'toxic'},{n:'Kidney',r:'safe'},{n:'Lungs',r:'safe'},{n:'Fertility',r:'toxic'}], overall:'moderate', aiMult:0.40 },
+    cisplatin:     { organs:[{n:'Heart',r:'toxic'},{n:'Liver',r:'unknown'},{n:'Kidney',r:'toxic'},{n:'Lungs',r:'safe'},{n:'Fertility',r:'toxic'}], overall:'high', aiMult:0.75 },
+  };
+  const k    = name.toLowerCase();
+  const d    = map[k] || { organs:[{n:'Heart',r:'unknown'},{n:'Liver',r:'unknown'},{n:'Kidney',r:'unknown'},{n:'Lungs',r:'unknown'},{n:'Fertility',r:'unknown'}], overall:'safe', aiMult:0.10 };
+  const effects = ['Liver Toxicity (AhR)','Metabolism / Liver','Tumor Risk (DNA Damage)','Heart / Brain Energy','Fertility (Estrogen)','Fertility (Androgen)','Nuclear Receptor-Aromatase','Nuclear Receptor-ER-LBD','Stress Response-ARE','Stress Response-ATAD5','Stress Response-HSE','Stress Response-MMP'];
+  const ai_risks = effects.map(e => ({ effect: e, risk_pct: Math.round((d.aiMult * 100 * (0.4 + Math.random() * 0.8)) * 10) / 10 }));
+  ai_risks.sort((a,b) => b.risk_pct - a.risk_pct);
+  const organs = d.organs.map(o => ({
+    name: o.n, rating: o.r,
+    reasoning: o.r === 'toxic'   ? `[Demo] Clinical evidence of ${o.n.toLowerCase()} toxicity documented in FDA label.`
+             : o.r === 'safe'    ? `[Demo] No significant ${o.n.toLowerCase()} toxicity documented.`
+             : `[Demo] Insufficient data in current dataset.`
+  }));
+  return { name, smiles: '[Demo] Connect Flask for real SMILES', clinical: { found: !!map[k], organs }, ai_risks, overall_risk: d.overall };
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function capitalise(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : '—'; }
+function toggleFaq(el) {
+  el.nextElementSibling.classList.toggle('open');
+  el.querySelector('.faq-chevron').classList.toggle('open');
+}
+</script>
+</body>
+</html>
