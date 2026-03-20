@@ -1,0 +1,303 @@
+# 🧬 DeepTox — Hybrid AI Toxicity Prediction System
+
+<div align="center">
+
+![DeepTox Banner](https://img.shields.io/badge/DeepTox-Hybrid%20AI%20Toxicity%20System-00cc6a?style=for-the-badge&logo=flask&logoColor=white)
+
+[![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-GitHub%20Pages-00d4ff?style=for-the-badge)](https://adityakumar008.github.io/DeepTox/)
+[![Python](https://img.shields.io/badge/Python-3.9+-ffb300?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.0-00cc6a?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-ff4d6d?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
+
+**A two-layer safety architecture that bridges verified FDA clinical records with NIH machine-learning predictions — giving you answers no single model can.**
+
+[🌐 Live Demo](#-live-demo) · [⚙️ Run Locally](#%EF%B8%8F-run-locally) · [📁 Folder Structure](#-folder-structure) · [🤖 ML Model](#-ml-model--training)
+
+</div>
+
+---
+
+## 📌 Table of Contents
+
+- [About the Project](#-about-the-project)
+- [Live Demo](#-live-demo)
+- [How It Works](#-how-it-works)
+- [Tech Stack](#-tech-stack)
+- [Datasets Used](#-datasets-used)
+- [ML Model & Training](#-ml-model--training)
+- [Folder Structure](#-folder-structure)
+- [Run Locally](#%EF%B8%8F-run-locally)
+- [Features](#-features)
+- [Screenshots](#-screenshots)
+- [Author](#-author)
+
+---
+
+## 🔬 About the Project
+
+**DeepTox** is a hybrid AI toxicity prediction system that solves a fundamental problem in computational toxicology:
+
+> *Neither clinical databases nor AI models alone can give you the full picture.*
+
+Most tools rely on a **single data source**. Clinical databases know what's already dangerous — but they're blind to novel compounds. AI models can predict new risks — but lack the authority of verified human data.
+
+**DeepTox runs both simultaneously:**
+
+| Layer | Source | Type | Strength |
+|-------|--------|------|----------|
+| 🏥 **Layer 1 — Clinical Doctor** | UniTox (FDA drug labels) | In-vivo · Human | 100% authoritative for known drugs |
+| 🧠 **Layer 2 — AI Chemist** | Tox21 (NIH / EPA) | In-vitro · ML | Works on any chemical structure, even novel ones |
+
+The result is a system that's more complete than either layer alone — and honest about what each layer does and doesn't know.
+
+---
+
+## 🌐 Live Demo
+
+> 🔗 **[Click here to view DeepTox Live](https://adityakumar008.github.io/DeepTox/)**
+
+The live demo runs in **Demo Mode** (mock data) since the Flask backend cannot run on GitHub Pages (static hosting only).
+
+To get **real predictions** from the actual ML model, follow the [Run Locally](#%EF%B8%8F-run-locally) instructions below.
+
+---
+
+## ⚙️ How It Works
+
+Here is the exact step-by-step flow when a user searches for a compound:
+
+```
+User Input (Drug Name or SMILES)
+        │
+        ▼
+[PubChemPy] ── If name given, fetch SMILES from PubChem API
+        │
+        ├──────────────────────────────────────┐
+        ▼                                      ▼
+[Layer 1 — Pandas]                    [Layer 2 — RDKit + ML]
+Search UniTox.csv                     Generate Morgan Fingerprint
+Return organ toxicity ratings         Feed to Random Forest model
++ Doctor's clinical reasoning         Get risk % per assay target
+        │                                      │
+        └──────────────┬───────────────────────┘
+                       ▼
+              [Flask API — /analyze]
+              Compile both results into JSON
+                       │
+                       ▼
+              [Frontend — index.html]
+              Render clinical table + AI risk bars
+              Overall risk verdict + PDF report
+```
+
+---
+
+## 🛠 Tech Stack
+
+| Component | Technology | Role |
+|-----------|-----------|------|
+| **ML Engine** | scikit-learn (Random Forest) | Toxicity prediction |
+| **Cheminformatics** | RDKit | SMILES parsing + Morgan fingerprints |
+| **Data Management** | Pandas | UniTox clinical database lookup |
+| **SMILES Resolver** | PubChemPy | Drug name → SMILES via PubChem API |
+| **Backend** | Flask + Flask-CORS | REST API connecting ML to frontend |
+| **Frontend** | HTML / CSS / JavaScript | Dark-themed SPA dashboard |
+| **PDF Reports** | jsPDF | Client-side report generation |
+
+---
+
+## 📊 Datasets Used
+
+### 1. UniTox — Clinical Database
+- **Source:** FDA Drug Labels
+- **Type:** In-vivo · Real-world human data
+- **Coverage:** Heart, Liver, Kidney, Lungs, Fertility
+- **Annotations:** Binary toxicity rating + physician-documented reasoning
+- **File:** `UniTox.csv`
+
+### 2. Tox21 — ML Training Data
+- **Source:** NIH / EPA / NCATS (Tox21 Initiative)
+- **Type:** In-vitro · Experimental lab data
+- **Compounds:** 12,707 chemicals
+- **Assay Targets:** 12 (Nuclear Receptors + Stress Response pathways)
+- **File:** `Tox21.csv`
+
+#### Tox21 Assay Targets:
+```
+Nuclear Receptors (NR):          Stress Response (SR):
+├── NR-AR (Androgen Receptor)    ├── SR-ARE
+├── NR-AhR                       ├── SR-ATAD5
+├── NR-Aromatase                 ├── SR-HSE
+├── NR-ER                        ├── SR-MMP
+├── NR-ER-LBD                    └── SR-p53 / SR-Mitochondrial
+└── NR-PPAR-gamma
+```
+
+---
+
+## 🤖 ML Model & Training
+
+### Model: Random Forest Classifier
+- **Algorithm:** Multi-output Random Forest Classifier
+- **Input:** 2048-bit Morgan Fingerprint (radius=2) generated by RDKit
+- **Output:** Toxicity probability (0–100%) per assay target
+- **Training Data:** Tox21 dataset (12,707 compounds × 12 targets)
+
+### ⚠️ Model File Not Included
+The trained model file `tox21_model.joblib` is **not included** in this repository due to its file size (116 MB), which exceeds GitHub's limit.
+
+### 🔁 How to Train the Model Yourself
+
+1. Make sure `Tox21.csv` is in your project folder
+2. Run the training script:
+
+```python
+import pandas as pd
+import numpy as np
+import joblib
+from rdkit import Chem
+from rdkit.Chem import rdFingerprintGenerator
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.multioutput import MultiOutputClassifier
+
+# Load dataset
+df = pd.read_csv('Tox21.csv')
+
+# Generate fingerprints
+mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
+
+def smiles_to_fp(smiles):
+    mol = Chem.MolFromSmiles(smiles)
+    if mol:
+        return mfpgen.GetFingerprintAsNumPy(mol)
+    return None
+
+df['fp'] = df['smiles'].apply(smiles_to_fp)
+df = df.dropna(subset=['fp'])
+
+X = np.stack(df['fp'].values)
+target_cols = [c for c in df.columns if c != 'smiles']
+y = df[target_cols].fillna(0).astype(int)
+
+# Train model
+rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+model = MultiOutputClassifier(rf)
+model.fit(X, y)
+
+# Save model
+joblib.dump(model, 'tox21_model.joblib')
+print("✅ Model saved!")
+```
+
+3. The `tox21_model.joblib` file will be created in your project folder
+4. Place it alongside `app.py` and run the server
+
+---
+
+## 📁 Folder Structure
+
+```
+DeepTox/
+│
+├── index.html              # Frontend — full SPA website
+├── app.py                  # Backend — Flask REST API
+│
+├── UniTox.csv              # Clinical database (FDA drug labels)
+├── Tox21.csv               # ML training data (NIH Tox21)
+├── tox21_model.joblib      # ⚠️ NOT INCLUDED — train locally (116MB)
+│
+├── requirements.txt        # Python dependencies
+├── .gitignore              # Git ignore rules
+└── README.md               # This file
+```
+
+---
+
+## 🚀 Run Locally
+
+### Prerequisites
+- Python 3.9+
+- Git
+
+### Step 1 — Clone the repository
+```bash
+git clone https://github.com/AdityaKumar008/DeepTox.git
+cd DeepTox
+```
+
+### Step 2 — Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Step 3 — Train the model (first time only)
+Follow the [training instructions above](#-how-to-train-the-model-yourself) to generate `tox21_model.joblib`.
+
+### Step 4 — Start the Flask backend
+```bash
+python app.py
+```
+Server starts at `http://127.0.0.1:5000`
+
+### Step 5 — Open the frontend
+Open `index.html` in your browser. The status badge in the bottom-right will switch from **DEMO MODE** → **FLASK LIVE** automatically. ✅
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Check if server + model are loaded |
+| `POST` | `/analyze` | Run full hybrid toxicity analysis |
+
+**Example request:**
+```bash
+curl -X POST http://127.0.0.1:5000/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"compound": "Aspirin", "input_type": "name"}'
+```
+
+---
+
+## ✨ Features
+
+- 🔍 **Dual-source analysis** — Clinical FDA records + AI predictions side by side
+- 💊 **Drug name lookup** — Type any common name, PubChem resolves the structure automatically
+- 🧪 **SMILES support** — Directly input chemical structures for novel compounds
+- 📊 **Visual risk bars** — Color-coded probability bars for all 12 assay targets
+- 🌙 **Light / Dark mode** — Toggle with memory across sessions
+- ⬇️ **PDF report download** — Professionally formatted report with all results
+- ⚡ **Smart fallback** — Demo mode when Flask isn't running (great for presentations)
+- 📱 **Responsive design** — Works on desktop and mobile
+
+---
+
+## 📸 Screenshots
+
+> *Screenshots will be added after live demonstration*
+
+| Home Page | Analyze Page | PDF Report |
+|-----------|-------------|------------|
+| ![Home](screenshots/home.png) | ![Analyze](screenshots/analyze.png) | ![Report](screenshots/report.png) |
+
+---
+
+## ⚠️ Disclaimer
+
+DeepTox is an **academic research prototype** developed for educational purposes only. The predictions generated — whether from the clinical database or the AI model — are **not validated for clinical use** and must not be used to make any medical, pharmaceutical, or safety decisions. Always consult qualified medical professionals.
+
+---
+
+## 👨‍💻 Author
+
+**Aditya Kumar**
+
+[![GitHub](https://img.shields.io/badge/GitHub-AdityaKumar008-181717?style=for-the-badge&logo=github)](https://github.com/AdityaKumar008)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/aditya-kumar-b7920b328)
+
+> 📚 *Project developed as part of academic coursework at IIT Jodhpur*
+
+---
+
+<div align="center">
+  <sub>Built with 🧬 by Aditya Kumar · © 2025 DeepTox · Research Prototype</sub>
+</div>
