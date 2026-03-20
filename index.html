@@ -367,6 +367,81 @@ footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 6
   .step-row { grid-template-columns: 60px 1fr; }
   .step-code { display: none; }
 }
+/* ─── MOLECULE VISUALIZER ─── */
+.mol-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; margin-bottom: 24px;
+}
+.mol-card-body {
+  padding: 24px; display: flex; gap: 32px; align-items: center;
+}
+.mol-canvas-wrap {
+  flex-shrink: 0; width: 220px; height: 220px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.mol-canvas-wrap svg { width: 100%; height: 100%; }
+.mol-canvas-wrap.loading::after {
+  content: 'Rendering...';
+  font-family: var(--font-mono); font-size: 11px; color: var(--text3);
+}
+.mol-info { flex: 1; }
+.mol-info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(26,48,80,.4); }
+.mol-info-row:last-child { border-bottom: none; }
+.mol-info-key { font-size: 13px; color: var(--text2); }
+.mol-info-val { font-family: var(--font-mono); font-size: 12px; color: var(--cyan); }
+.mol-smiles-box {
+  margin-top: 14px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.mol-smiles-text {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text2);
+  word-break: break-all; flex: 1;
+}
+.copy-btn {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
+  padding: 5px 12px; border-radius: 4px; cursor: pointer; white-space: nowrap;
+  background: transparent; border: 1px solid var(--border); color: var(--text2);
+  transition: all .2s; flex-shrink: 0;
+}
+.copy-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+/* ─── SEARCH HISTORY ─── */
+.history-box {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; margin-bottom: 24px; display: none;
+}
+.history-head {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.history-head h4 { font-family: var(--font-head); font-weight: 700; font-size: 14px; color: var(--white); }
+.history-clear {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text3); cursor: pointer;
+  background: none; border: none; transition: color .2s;
+}
+.history-clear:hover { color: var(--red); }
+.hist-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; border-bottom: 1px solid rgba(26,48,80,.4);
+  cursor: pointer; transition: background .2s;
+}
+.hist-item:last-child { border-bottom: none; }
+.hist-item:hover { background: rgba(0,212,255,.04); }
+.hist-left { display: flex; flex-direction: column; gap: 3px; }
+.hist-name { font-size: 14px; color: var(--text); font-weight: 500; }
+.hist-type { font-family: var(--font-mono); font-size: 10px; color: var(--text3); letter-spacing: .5px; }
+.hist-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.hist-risk { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; padding: 2px 8px; border-radius: 3px; }
+.hist-risk.safe     { background: rgba(0,255,136,.08); color: var(--green); border: 1px solid rgba(0,255,136,.2); }
+.hist-risk.moderate { background: rgba(255,179,0,.08);  color: var(--amber); border: 1px solid rgba(255,179,0,.2); }
+.hist-risk.high     { background: rgba(255,77,109,.08); color: var(--red);   border: 1px solid rgba(255,77,109,.2); }
+.hist-time { font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
+
 /* ─── DOWNLOAD BUTTON ─── */
 .download-btn {
   display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -386,6 +461,7 @@ footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 6
 .download-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.js"></script>
 </head>
 <body>
 
@@ -614,6 +690,15 @@ footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 6
       </div>
     </div>
 
+    <!-- Search History -->
+    <div class="history-box" id="historyBox">
+      <div class="history-head">
+        <h4>🕓 Recent Searches</h4>
+        <button class="history-clear" onclick="clearHistory()">Clear All</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+
     <!-- Loading -->
     <div class="loading-state" id="loadingState">
       <div class="spinner"></div>
@@ -635,6 +720,29 @@ footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 6
           <div class="result-formula" id="resultFormula">SMILES: —</div>
         </div>
         <div class="risk-badge-lg" id="overallBadge">—</div>
+      </div>
+
+      <!-- Molecule Visualizer -->
+      <div class="mol-card" id="molCard">
+        <div class="result-card-head">
+          <span class="icon">⚛️</span><h3>Molecular Structure</h3>
+          <span class="source-tag ai" style="margin-left:auto;">RDKit.js · 2D Render</span>
+        </div>
+        <div class="mol-card-body">
+          <div class="mol-canvas-wrap loading" id="molCanvasWrap"></div>
+          <div class="mol-info">
+            <div class="mol-info-row"><span class="mol-info-key">Formula</span><span class="mol-info-val" id="molFormula">—</span></div>
+            <div class="mol-info-row"><span class="mol-info-key">Mol. Weight</span><span class="mol-info-val" id="molWeight">—</span></div>
+            <div class="mol-info-row"><span class="mol-info-key">Heavy Atoms</span><span class="mol-info-val" id="molAtoms">—</span></div>
+            <div class="mol-info-row"><span class="mol-info-key">Ring Count</span><span class="mol-info-val" id="molRings">—</span></div>
+            <div class="mol-info-row"><span class="mol-info-key">H-Bond Donors</span><span class="mol-info-val" id="molHBD">—</span></div>
+            <div class="mol-info-row"><span class="mol-info-key">H-Bond Acceptors</span><span class="mol-info-val" id="molHBA">—</span></div>
+            <div class="mol-smiles-box">
+              <span class="mol-smiles-text" id="molSmilesDisplay">—</span>
+              <button class="copy-btn" id="copyBtn" onclick="copySmiles()">Copy</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="results-grid">
@@ -815,201 +923,285 @@ footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 6
 
 <!-- ═══════════ SCRIPT ═══════════ -->
 <script>
-// ── Download PDF Report ───────────────────────────────────────────────────────
-let lastResult = null; // stores latest analysis data for PDF
+// ── RDKit molecule visualizer ─────────────────────────────────────────────────
+let RDKitModule = null;
+initRDKit().catch(() => {});
+
+async function initRDKit() {
+  if (window.initRDKitModule) {
+    RDKitModule = await window.initRDKitModule();
+  }
+}
+
+function renderMolecule(smiles) {
+  const wrap = document.getElementById('molCanvasWrap');
+  wrap.innerHTML = '';
+  wrap.classList.add('loading');
+
+  // skip demo placeholder
+  if (!smiles || smiles.startsWith('[Demo]') || smiles.startsWith('Demo')) {
+    wrap.innerHTML = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);padding:20px;text-align:center;">Connect Flask for<br/>live structure render</div>';
+    wrap.classList.remove('loading');
+    return;
+  }
+
+  if (!RDKitModule) {
+    // retry once after 2s
+    setTimeout(() => renderMolecule(smiles), 2000);
+    return;
+  }
+
+  try {
+    const mol = RDKitModule.get_mol(smiles);
+    if (!mol) throw new Error('invalid');
+
+    // get molecule properties
+    const details = JSON.parse(mol.get_descriptors());
+    document.getElementById('molFormula').textContent  = details.formula          || '—';
+    document.getElementById('molWeight').textContent   = details.amw              ? details.amw.toFixed(2) + ' g/mol' : '—';
+    document.getElementById('molAtoms').textContent    = details.NumHeavyAtoms    || '—';
+    document.getElementById('molRings').textContent    = details.RingCount        || '0';
+    document.getElementById('molHBD').textContent      = details.NumHBD           || '0';
+    document.getElementById('molHBA').textContent      = details.NumHBA           || '0';
+
+    // render SVG — dark themed
+    const drawDetails = JSON.stringify({
+      width: 220, height: 220,
+      bondLineWidth: 1.5,
+      backgroundColour: [0.05, 0.1, 0.18, 1],
+      atomColourPalette: {
+        0:  [0.78, 0.87, 0.96],
+        6:  [0.78, 0.87, 0.96],
+        7:  [0.0,  0.83, 1.0],
+        8:  [1.0,  0.3,  0.42],
+        16: [1.0,  0.7,  0.0],
+        17: [0.0,  1.0,  0.53],
+        9:  [0.0,  1.0,  0.53],
+        15: [1.0,  0.7,  0.0],
+      }
+    });
+
+    const svg = mol.get_svg_with_highlights(drawDetails);
+    wrap.innerHTML = svg;
+    wrap.classList.remove('loading');
+    mol.delete();
+
+  } catch(e) {
+    wrap.innerHTML = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);padding:20px;text-align:center;">Could not render<br/>structure</div>';
+    wrap.classList.remove('loading');
+  }
+}
+
+function copySmiles() {
+  const smiles = document.getElementById('molSmilesDisplay').textContent;
+  if (!smiles || smiles === '—') return;
+  navigator.clipboard.writeText(smiles).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Download PDF Report — clean white ────────────────────────────────────────
+let lastResult = null;
 
 function downloadReport() {
   if (!lastResult) return;
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const doc    = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W      = 210;
+  const M      = 20;   // margin
+  const col    = W - M * 2;
+  let y        = 20;
+  const now    = new Date();
 
-  const W       = 210;
-  const margin  = 18;
-  const col     = W - margin * 2;
-  let y         = 0;
+  // helpers
+  const black  = () => doc.setTextColor(20, 20, 20);
+  const gray   = () => doc.setTextColor(100, 100, 100);
+  const dgray  = () => doc.setTextColor(60, 60, 60);
+  const red    = () => doc.setTextColor(180, 30, 50);
+  const green  = () => doc.setTextColor(0, 140, 70);
+  const amber  = () => doc.setTextColor(180, 110, 0);
+  const line   = (ly) => { doc.setDrawColor(210,210,210); doc.setLineWidth(0.3); doc.line(M, ly, W - M, ly); };
 
-  // ── helpers ──────────────────────────────────────────────────────────────
-  const hex = (h) => {
-    const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
-    return [r, g, b];
-  };
-  const C = {
-    bg:     [4,8,16],    bgPanel:[13,27,46],  border:[26,48,80],
-    green:  [0,204,106], cyan:   [0,212,255], amber: [255,179,0],
-    red:    [255,77,109],text:   [200,223,245],text2:[122,155,191],
-    white:  [234,244,255],
-  };
-  const setFill   = (c) => doc.setFillColor(...c);
-  const setStroke = (c) => doc.setDrawColor(...c);
-  const setTxt    = (c) => doc.setTextColor(...c);
+  // ── HEADER ──────────────────────────────────────────────────────────────
+  doc.setFillColor(245, 248, 252);
+  doc.rect(0, 0, W, 36, 'F');
+  doc.setFillColor(0, 140, 70);
+  doc.rect(0, 0, W, 3, 'F');
 
-  function rect(x, ry, w, h, fill, stroke) {
-    setFill(fill || C.bgPanel); setStroke(stroke || C.border);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(x, ry, w, h, 2, 2, stroke ? 'FD' : 'F');
-  }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
+  black(); doc.text('DeepTox', M, 18);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  gray(); doc.text('Hybrid AI Toxicity Prediction Report', M, 25);
 
-  function wrapText(text, x, wy, maxW, lineH) {
-    const lines = doc.splitTextToSize(String(text), maxW);
-    doc.text(lines, x, wy);
-    return wy + lines.length * lineH;
-  }
+  const dateStr = now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+                + '  ' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  gray(); doc.setFontSize(8);
+  doc.text('Generated: ' + dateStr, W - M, 25, { align: 'right' });
 
-  // ── HEADER ────────────────────────────────────────────────────────────────
-  setFill(C.bg); doc.rect(0, 0, W, 297, 'F');   // full page dark bg
-  setFill([7,13,26]); doc.rect(0, 0, W, 42, 'F'); // header band
-
-  // accent line
-  setFill(C.green); doc.rect(0, 0, W, 1.5, 'F');
-
-  // logo text
-  doc.setFont('helvetica','bold'); doc.setFontSize(22);
-  setTxt(C.green); doc.text('DEEP', margin, 16);
-  const dw = doc.getTextWidth('DEEP');
-  setTxt(C.cyan);  doc.text('TOX', margin + dw, 16);
-
-  doc.setFontSize(9); doc.setFont('helvetica','normal');
-  setTxt(C.text2); doc.text('Hybrid AI Toxicity Prediction System', margin, 23);
-
-  // date
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + '  ' + now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  setTxt(C.text2); doc.setFontSize(8);
-  doc.text('Report generated: ' + dateStr, W - margin, 23, { align:'right' });
-
-  // risk badge (top right)
-  const risk  = (lastResult.overall_risk || 'unknown').toLowerCase();
-  const riskC = risk === 'safe' ? C.green : risk === 'high' ? C.red : C.amber;
+  // overall risk (top right)
+  const risk      = (lastResult.overall_risk || 'unknown').toLowerCase();
   const riskLabel = risk.toUpperCase() + ' RISK';
-  const bw = doc.getTextWidth(riskLabel) + 10;
-  setFill(riskC); doc.setFillColor(riskC[0], riskC[1], riskC[2], 0.15);
-  doc.roundedRect(W - margin - bw, 8, bw, 8, 1, 1, 'F');
-  setFill(riskC); doc.setFillColor(...riskC); doc.roundedRect(W - margin - bw, 15.5, bw, 0.8, 0, 0, 'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(8);
-  setTxt(riskC); doc.text(riskLabel, W - margin - bw/2, 13.5, { align:'center' });
+  if (risk === 'high')         red();
+  else if (risk === 'safe')    green();
+  else                         amber();
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+  doc.text(riskLabel, W - M, 16, { align: 'right' });
 
-  y = 50;
+  y = 44;
 
-  // ── DRUG INFO ────────────────────────────────────────────────────────────
-  rect(margin, y, col, 22, C.bgPanel, C.border);
-  doc.setFont('helvetica','bold'); doc.setFontSize(16);
-  setTxt(C.white); doc.text(lastResult.name || '—', margin + 6, y + 9);
-  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
-  setTxt(C.text2);
-  const smilesLine = 'SMILES: ' + (lastResult.smiles || '—');
-  doc.text(doc.splitTextToSize(smilesLine, col - 12), margin + 6, y + 15);
-  y += 28;
+  // ── DRUG NAME ────────────────────────────────────────────────────────────
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+  black(); doc.text(lastResult.name || '—', M, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+  gray();
+  const smilesWrapped = doc.splitTextToSize('SMILES: ' + (lastResult.smiles || '—'), col);
+  doc.text(smilesWrapped, M, y);
+  y += smilesWrapped.length * 4 + 6;
+  line(y); y += 6;
 
-  // ── SECTION HEADER helper ──────────────────────────────────────────────
-  function sectionHead(title, badge, badgeColor) {
-    setFill([12,21,38]); doc.rect(margin, y, col, 8, 'F');
-    setFill(badgeColor); doc.rect(margin, y, 3, 8, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(9);
-    setTxt(C.white); doc.text(title, margin + 7, y + 5.5);
-    if (badge) {
-      doc.setFontSize(7); setTxt(badgeColor);
-      doc.text(badge, W - margin - 2, y + 5.5, { align:'right' });
-    }
-    y += 11;
+  // ── SECTION HEADING helper ────────────────────────────────────────────────
+  function sHead(title, sub) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    black(); doc.text(title, M, y);
+    if (sub) { doc.setFont('helvetica','normal'); doc.setFontSize(8); gray(); doc.text(sub, W - M, y, { align:'right' }); }
+    y += 5; line(y); y += 5;
   }
 
-  // ── CLINICAL SECTION ──────────────────────────────────────────────────
-  sectionHead('CLINICAL RECORDS', 'UniTox · FDA', C.amber);
+  // ── CLINICAL RECORDS ──────────────────────────────────────────────────────
+  sHead('Clinical Records', 'Source: UniTox · FDA Drug Labels');
 
   const clinical = lastResult.clinical || {};
   if (!clinical.found) {
-    rect(margin, y, col, 12, C.bgPanel, C.border);
-    doc.setFont('helvetica','italic'); doc.setFontSize(8.5);
-    setTxt(C.text2); doc.text('Drug not found in UniTox clinical database. AI prediction is the sole data source.', margin + 6, y + 7.5);
-    y += 17;
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
+    gray(); doc.text('Drug not found in UniTox clinical database. AI prediction is the sole data source.', M, y);
+    y += 10;
   } else {
-    const organs = clinical.organs || [];
-    organs.forEach((org, i) => {
-      const rowH = org.reasoning && org.reasoning.length > 30 ? 18 : 12;
-      const bg   = i % 2 === 0 ? C.bgPanel : [10,20,36];
-      rect(margin, y, col, rowH, bg, C.border);
-
+    (clinical.organs || []).forEach(org => {
       // organ name
-      doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
-      setTxt(C.text); doc.text(org.name, margin + 6, y + 6);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      black(); doc.text(org.name, M, y);
 
-      // status badge
-      const sc = org.rating === 'toxic' ? C.red : org.rating === 'safe' ? C.green : C.text2;
-      doc.setFontSize(7); setTxt(sc);
-      doc.setFont('helvetica','bold');
-      doc.text(org.rating.toUpperCase(), margin + 40, y + 6);
+      // status
+      if (org.rating === 'toxic')        red();
+      else if (org.rating === 'safe')    green();
+      else                               gray();
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      doc.text(org.rating.toUpperCase(), M + 35, y);
 
       // reasoning
-      if (org.reasoning && org.reasoning.length > 5 && !org.reasoning.startsWith('[Demo]')) {
-        doc.setFont('helvetica','normal'); doc.setFontSize(7);
-        setTxt(C.text2);
-        const reason = doc.splitTextToSize(org.reasoning, col - 55);
-        doc.text(reason, margin + 58, y + 5);
+      if (org.reasoning && !org.reasoning.startsWith('[Demo]') && org.reasoning !== 'No details available.') {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+        dgray();
+        const rLines = doc.splitTextToSize(org.reasoning, col - 55);
+        doc.text(rLines, M + 55, y);
+        y += Math.max(rLines.length * 3.5, 5);
+      } else {
+        y += 5;
       }
-      y += rowH + 1;
+      y += 2;
     });
   }
-  y += 6;
+  y += 4; line(y); y += 7;
 
-  // ── AI PREDICTIONS ────────────────────────────────────────────────────
-  sectionHead('AI MOLECULAR RISK PREDICTIONS', 'Tox21 · Random Forest Model', C.cyan);
+  // ── AI PREDICTIONS ────────────────────────────────────────────────────────
+  sHead('AI Molecular Risk Predictions', 'Source: Tox21 · Random Forest Model');
 
-  const aiRisks = lastResult.ai_risks || [];
-  aiRisks.forEach((r, i) => {
-    const pct   = r.risk_pct ?? 0;
-    const barC  = pct > 50 ? C.red : pct > 25 ? C.amber : C.green;
-    const bg    = i % 2 === 0 ? C.bgPanel : [10,20,36];
-    rect(margin, y, col, 10, bg, C.border);
+  (lastResult.ai_risks || []).forEach(r => {
+    const pct = r.risk_pct ?? 0;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+    black(); doc.text(r.effect || r.assay || '—', M, y);
 
-    // effect name
-    doc.setFont('helvetica','normal'); doc.setFontSize(8);
-    setTxt(C.text); doc.text(r.effect || r.assay || '—', margin + 6, y + 6.5);
+    // simple bar
+    const bx = M + 85, bw = 55, bh = 3, by = y - 3;
+    doc.setFillColor(225, 225, 225); doc.rect(bx, by, bw, bh, 'F');
+    if      (pct > 50) doc.setFillColor(180, 30,  50);
+    else if (pct > 25) doc.setFillColor(180, 110, 0);
+    else               doc.setFillColor(0,   140, 70);
+    doc.rect(bx, by, bw * (pct / 100), bh, 'F');
 
-    // bar track
-    const barX = margin + 90; const barW = 60; const barY = y + 4.5; const barH = 3;
-    setFill([26,48,80]); doc.rect(barX, barY, barW, barH, 'F');
-    setFill(barC); doc.rect(barX, barY, barW * (pct / 100), barH, 'F');
-
-    // percentage text
-    doc.setFont('helvetica','bold'); doc.setFontSize(8);
-    setTxt(barC); doc.text(pct.toFixed(1) + '%', barX + barW + 3, y + 6.5);
-
-    y += 11;
+    // pct text
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+    if      (pct > 50) red();
+    else if (pct > 25) amber();
+    else               green();
+    doc.text(pct.toFixed(1) + '%', bx + bw + 3, y);
+    y += 7;
   });
-  y += 6;
 
-  // ── SUMMARY ──────────────────────────────────────────────────────────
-  sectionHead('ANALYSIS SUMMARY', '', C.green);
+  y += 4; line(y); y += 7;
+
+  // ── SUMMARY ───────────────────────────────────────────────────────────────
+  sHead('Analysis Summary', '');
   const sumText = document.getElementById('summaryText').textContent;
-  rect(margin, y, col, 24, C.bgPanel, C.border);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
-  setTxt(C.text);
-  const sumLines = doc.splitTextToSize(sumText, col - 12);
-  doc.text(sumLines.slice(0,5), margin + 6, y + 7);
-  y += 30;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  dgray();
+  const sumLines = doc.splitTextToSize(sumText, col);
+  doc.text(sumLines, M, y);
+  y += sumLines.length * 5 + 8;
 
-  // ── DISCLAIMER ────────────────────────────────────────────────────────
-  // push to near bottom
+  // ── DISCLAIMER ────────────────────────────────────────────────────────────
   y = Math.max(y, 255);
-  setFill([20,15,5]); doc.rect(margin, y, col, 20, 'F');
-  setFill(C.amber); doc.rect(margin, y, 3, 20, 'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
-  setTxt(C.amber); doc.text('⚠  DISCLAIMER', margin + 7, y + 6);
-  doc.setFont('helvetica','normal'); doc.setFontSize(7);
-  setTxt(C.text2);
+  doc.setFillColor(255, 251, 240);
+  doc.rect(M, y, col, 22, 'F');
+  doc.setDrawColor(200, 160, 0); doc.setLineWidth(0.4);
+  doc.rect(M, y, col, 22, 'S');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+  amber(); doc.text('DISCLAIMER', M + 4, y + 6);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+  dgray();
   const disc = 'This report is generated by DeepTox, a research prototype. It is NOT a validated clinical tool and must not be used for any medical or pharmaceutical decisions. Predictions are probabilistic estimates based on in-vitro data. Always consult qualified medical professionals.';
-  doc.text(doc.splitTextToSize(disc, col - 12), margin + 7, y + 11);
+  doc.text(doc.splitTextToSize(disc, col - 8), M + 4, y + 12);
 
-  // ── FOOTER LINE ───────────────────────────────────────────────────────
-  setFill(C.green); doc.rect(0, 292, W, 0.8, 'F');
-  doc.setFont('helvetica','normal'); doc.setFontSize(7);
-  setTxt(C.text2); doc.text('DeepTox · Hybrid AI Toxicity Prediction System · Research Prototype', margin, 296);
-  doc.text('Page 1 of 1', W - margin, 296, { align:'right' });
+  // ── FOOTER ────────────────────────────────────────────────────────────────
+  doc.setFillColor(245, 248, 252); doc.rect(0, 285, W, 12, 'F');
+  doc.setFillColor(0, 140, 70);    doc.rect(0, 285, W, 0.8, 'F');
+  gray(); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+  doc.text('DeepTox · Hybrid AI Toxicity Prediction System · Research Prototype · Not for clinical use', M, 291);
+  doc.text('Page 1 of 1', W - M, 291, { align: 'right' });
 
-  // ── SAVE ─────────────────────────────────────────────────────────────
-  const filename = `DeepTox_Report_${(lastResult.name || 'compound').replace(/\s+/g,'_')}_${now.toISOString().slice(0,10)}.pdf`;
-  doc.save(filename);
+  // ── SAVE ─────────────────────────────────────────────────────────────────
+  const fname = `DeepTox_Report_${(lastResult.name||'compound').replace(/\s+/g,'_')}_${now.toISOString().slice(0,10)}.pdf`;
+  doc.save(fname);
 }
+
+// ── Search History ────────────────────────────────────────────────────────────
+let searchHistory = JSON.parse(localStorage.getItem('deeptox-history') || '[]');
+
+function saveToHistory(compound, inputType, result) {
+  const entry = {
+    compound,
+    inputType,
+    overall: result.overall_risk,
+    time: new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }),
+    date: new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short' }),
+  };
+  searchHistory = [entry, ...searchHistory.filter(e => e.compound !== compound)].slice(0, 4);
+  localStorage.setItem('deeptox-history', JSON.stringify(searchHistory));
+  renderHistory();
+}
+
+function renderHistory() {
+  const box = document.getElementById('historyBox');
+  const list = document.getElementById('historyList');
+  if (!searchHistory.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  list.innerHTML = searchHistory.map(e => `
+    <div class="hist-item" onclick="fillAndAnalyze('${e.compound}')">
+      <div class="hist-left">
+        <span class="hist-name">${e.compound}</span>
+        <span class="hist-type">${e.inputType === 'name' ? 'Drug Name' : 'SMILES'}</span>
+      </div>
+      <div class="hist-right">
+        <span class="hist-risk ${e.overall}">${(e.overall||'—').toUpperCase()}</span>
+        <span class="hist-time">${e.date} · ${e.time}</span>
+      </div>
+    </div>`).join('');
+}
+renderHistory(); // init on load
 
 // ── Theme toggle ──────────────────────────────────────────────────────────────
 function toggleTheme() {
@@ -1134,6 +1326,7 @@ async function runAnalysis() {
   document.getElementById('loadingState').classList.remove('visible');
   if (usedDemo) document.getElementById('demoNotice').style.display = 'block';
   renderResults(data);
+  saveToHistory(compound, inputType, data);
   btn.disabled = false;
 }
 
@@ -1142,6 +1335,11 @@ function renderResults(data) {
   lastResult = data; // save for PDF generation
   document.getElementById('resultName').textContent    = data.name || '—';
   document.getElementById('resultFormula').textContent = 'SMILES: ' + (data.smiles || '—');
+
+  // Molecule visualizer
+  const smiles = data.smiles || '';
+  document.getElementById('molSmilesDisplay').textContent = smiles || '—';
+  renderMolecule(smiles);
 
   // Overall badge
   const badge = document.getElementById('overallBadge');
@@ -1216,6 +1414,12 @@ function renderResults(data) {
   document.getElementById('summaryText').textContent = summary;
 
   document.getElementById('resultSection').classList.add('visible');
+}
+
+function clearHistory() {
+  searchHistory = [];
+  localStorage.removeItem('deeptox-history');
+  renderHistory();
 }
 
 // ── Demo fallback data ────────────────────────────────────────────────────────
