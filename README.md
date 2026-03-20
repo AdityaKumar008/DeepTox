@@ -1,21 +1,6 @@
 # 🧬 DeepTox — Hybrid AI Toxicity Prediction System
 
-<div align="center">
 
-![DeepTox Banner](https://img.shields.io/badge/DeepTox-Hybrid%20AI%20Toxicity%20System-00cc6a?style=for-the-badge&logo=flask&logoColor=white)
-
-[![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-GitHub%20Pages-00d4ff?style=for-the-badge)](https://adityakumar008.github.io/DeepTox/)
-[![Python](https://img.shields.io/badge/Python-3.9+-ffb300?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-3.0-00cc6a?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-ff4d6d?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
-
-**A two-layer safety architecture that bridges verified FDA clinical records with NIH machine-learning predictions — giving you answers no single model can.**
-
-[🌐 Live Demo](#-live-demo) · [⚙️ Run Locally](#%EF%B8%8F-run-locally) · [📁 Folder Structure](#-folder-structure) · [🤖 ML Model](#-ml-model--training)
-
-</div>
-
----
 
 ## 📌 Table of Contents
 
