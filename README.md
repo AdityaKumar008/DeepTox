@@ -275,8 +275,7 @@ DeepTox is an **academic research prototype** developed for educational purposes
 ## 👨‍💻 Author
 
 **Aditya Kumar**  
-LinkedIn: https://www.linkedin.com/in/aditya-kumar-b7920b328  
-GitHub: https://github.com/AdityaKumar008
+LinkedIn: https://www.linkedin.com/in/aditya-kumar-b7920b328
 
 > 📚 *Project developed as part of academic coursework at IIT Jodhpur*
 
