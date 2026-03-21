@@ -94,7 +94,7 @@ def get_clinical_report(drug_name: str) -> dict:
 
     def safe_reason(col):
         val = str(row.get(col, 'No details available.'))
-        return val[:200] + ('…' if len(val) > 200 else '')
+        return val[:600] + ('…' if len(val) > 600 else '')
 
     organs = [
         {
