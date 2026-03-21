@@ -6,10 +6,11 @@
 
 ---
 
-## Table of Contents
+## 📌 Table of Contents
 
 - [Problem Statement](#problem-statement)
 - [About the Project](#about-the-project)
+- [Demo Video](#demo-video)
 - [Live Demo](#live-demo)
 - [How It Works](#how-it-works)
 - [Tech Stack](#tech-stack)
@@ -23,7 +24,7 @@
 
 ---
 
-## Problem Statement
+## 🎯 Problem Statement
 
 Toxicity prediction is a critical step in drug discovery and chemical safety evaluation. Currently, two types of systems exist — but both have serious limitations:
 
@@ -36,7 +37,7 @@ Toxicity prediction is a critical step in drug discovery and chemical safety eva
 
 ---
 
-## About the Project
+## 🔬 About the Project
 
 **DeepTox** is a hybrid AI toxicity prediction system built as part of academic research at IIT Jodhpur.
 
@@ -51,7 +52,15 @@ The result is a system that is more complete than either layer alone — and hon
 
 ---
 
-## Live Demo
+## 🎬 Demo Video
+
+> ▶️ **[Watch Full Demo on Google Drive](https://drive.google.com/file/d/1FIYSW5EjaiTjz7ji75sZZmChX9K7paqe/view?usp=drivesdk)**
+
+The video demonstrates the complete working system — Flask backend starting in terminal, live predictions from the ML model, 2D molecular structure rendering, clinical records with doctor reasoning, AI risk bars, light/dark mode toggle, and PDF report download.
+
+---
+
+## 🌐 Live Demo
 
 > 🔗 **[Click here to view DeepTox Live](https://adityakumar008.github.io/DeepTox/)**
 
@@ -61,7 +70,7 @@ To get **real predictions** from the actual ML model, follow the [Run Locally](#
 
 ---
 
-## How It Works
+## ⚙️ How It Works
 
 Step-by-step flow when a user searches for a compound:
 
@@ -92,7 +101,7 @@ Return organ toxicity ratings         Feed to Random Forest model
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Component | Technology | Role |
 |-----------|-----------|------|
@@ -107,7 +116,7 @@ Return organ toxicity ratings         Feed to Random Forest model
 
 ---
 
-## Datasets Used
+## 📊 Datasets Used
 
 ### 1. UniTox — Clinical Database
 - **Source:** FDA Drug Labels
@@ -136,7 +145,7 @@ Nuclear Receptors (NR):          Stress Response (SR):
 
 ---
 
-## ML Model and Training
+## 🤖 ML Model and Training
 
 ### Model: Random Forest Classifier
 - **Algorithm:** Multi-output Random Forest Classifier
@@ -194,7 +203,7 @@ print("✅ Model saved!")
 
 ---
 
-## Folder Structure
+## 📁 Folder Structure
 
 ```
 DeepTox/
@@ -213,7 +222,7 @@ DeepTox/
 
 ---
 
-## Run Locally
+## 🚀 Run Locally
 
 ### Prerequisites
 - Python 3.9+
@@ -244,7 +253,7 @@ Open `index.html` in your browser. The status badge in the bottom-right corner w
 
 ---
 
-## Features
+## ✨ Features
 
 ### Core Analysis
 - 🔍 **Dual-source analysis** — Clinical FDA records + AI predictions side by side
@@ -268,13 +277,13 @@ Open `index.html` in your browser. The status badge in the bottom-right corner w
 
 ---
 
-## Disclaimer
+## ⚠️ Disclaimer
 
 DeepTox is an **academic research prototype** developed for educational purposes only. The predictions generated — whether from the clinical database or the AI model — are **not validated for clinical use** and must not be used to make any medical, pharmaceutical, or safety decisions. Always consult qualified medical professionals.
 
 ---
 
-## Author
+## 👨‍💻 Author
 
 **Aditya Kumar**  
 LinkedIn: https://www.linkedin.com/in/aditya-kumar-b7920b328
