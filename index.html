@@ -1016,167 +1016,153 @@ function copySmiles() {
   });
 }
 
-// ── Download PDF Report — clean white ────────────────────────────────────────
+// ── Download PDF Report — clean single page ──────────────────────────────────
 let lastResult = null;
 
 function downloadReport() {
   if (!lastResult) return;
   const { jsPDF } = window.jspdf;
-  const doc    = new jsPDF({ unit: 'mm', format: 'a4' });
-  const W      = 210;
-  const M      = 20;   // margin
-  const col    = W - M * 2;
-  let y        = 20;
-  const now    = new Date();
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, M = 20, col = W - M * 2;
+  let y = 20;
+  const now = new Date();
 
-  // helpers
-  const black  = () => doc.setTextColor(20, 20, 20);
-  const gray   = () => doc.setTextColor(100, 100, 100);
-  const dgray  = () => doc.setTextColor(60, 60, 60);
-  const red    = () => doc.setTextColor(180, 30, 50);
-  const green  = () => doc.setTextColor(0, 140, 70);
-  const amber  = () => doc.setTextColor(180, 110, 0);
-  const line   = (ly) => { doc.setDrawColor(210,210,210); doc.setLineWidth(0.3); doc.line(M, ly, W - M, ly); };
+  // ── color helpers ─────────────────────────────────────────────────────────
+  const black = () => doc.setTextColor(20, 20, 20);
+  const gray  = () => doc.setTextColor(110, 110, 110);
+  const dgray = () => doc.setTextColor(60, 60, 60);
+  const red   = () => doc.setTextColor(180, 30, 50);
+  const green = () => doc.setTextColor(0, 140, 70);
+  const amber = () => doc.setTextColor(180, 110, 0);
+  const line  = (ly) => { doc.setDrawColor(220,220,220); doc.setLineWidth(0.25); doc.line(M, ly, W-M, ly); };
 
-  // ── HEADER ──────────────────────────────────────────────────────────────
-  doc.setFillColor(245, 248, 252);
-  doc.rect(0, 0, W, 36, 'F');
-  doc.setFillColor(0, 140, 70);
-  doc.rect(0, 0, W, 3, 'F');
+  // ── HEADER ────────────────────────────────────────────────────────────────
+  doc.setFillColor(245, 248, 252); doc.rect(0, 0, W, 34, 'F');
+  doc.setFillColor(0, 140, 70);   doc.rect(0, 0, W, 3, 'F');
 
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
-  black(); doc.text('DeepTox', M, 18);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-  gray(); doc.text('Hybrid AI Toxicity Prediction Report', M, 25);
+  doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  black(); doc.text('DeepTox', M, 17);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+  gray(); doc.text('Hybrid AI Toxicity Prediction Report', M, 24);
 
-  const dateStr = now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
-                + '  ' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
-  gray(); doc.setFontSize(8);
-  doc.text('Generated: ' + dateStr, W - M, 25, { align: 'right' });
+  const dateStr = now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+                + '  ' + now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  gray(); doc.setFontSize(7.5);
+  doc.text('Generated: ' + dateStr, W-M, 24, {align:'right'});
 
-  // overall risk (top right)
-  const risk      = (lastResult.overall_risk || 'unknown').toLowerCase();
-  const riskLabel = risk.toUpperCase() + ' RISK';
-  if (risk === 'high')         red();
-  else if (risk === 'safe')    green();
-  else                         amber();
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-  doc.text(riskLabel, W - M, 16, { align: 'right' });
+  const risk = (lastResult.overall_risk || 'unknown').toLowerCase();
+  if      (risk==='high') red();
+  else if (risk==='safe') green();
+  else                    amber();
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text(risk.toUpperCase()+' RISK', W-M, 15, {align:'right'});
 
-  y = 44;
+  y = 42;
 
-  // ── DRUG NAME ────────────────────────────────────────────────────────────
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
-  black(); doc.text(lastResult.name || '—', M, y);
-  y += 6;
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+  // ── DRUG NAME + SMILES ────────────────────────────────────────────────────
+  doc.setFont('helvetica','bold'); doc.setFontSize(15);
+  black(); doc.text(lastResult.name || '—', M, y); y += 5;
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
   gray();
-  const smilesWrapped = doc.splitTextToSize('SMILES: ' + (lastResult.smiles || '—'), col);
-  doc.text(smilesWrapped, M, y);
-  y += smilesWrapped.length * 4 + 6;
+  const sm = doc.splitTextToSize('SMILES: '+(lastResult.smiles||'—'), col);
+  doc.text(sm, M, y); y += sm.length * 3.8 + 5;
   line(y); y += 6;
 
-  // ── SECTION HEADING helper ────────────────────────────────────────────────
+  // ── section head helper ───────────────────────────────────────────────────
   function sHead(title, sub) {
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
     black(); doc.text(title, M, y);
-    if (sub) { doc.setFont('helvetica','normal'); doc.setFontSize(8); gray(); doc.text(sub, W - M, y, { align:'right' }); }
-    y += 5; line(y); y += 5;
+    if (sub) { doc.setFont('helvetica','normal'); doc.setFontSize(7.5); gray(); doc.text(sub, W-M, y, {align:'right'}); }
+    y += 4; line(y); y += 4;
   }
 
-  // ── CLINICAL RECORDS ──────────────────────────────────────────────────────
-  sHead('Clinical Records', 'Source: UniTox · FDA Drug Labels');
+  // ── CLINICAL RECORDS — short bullet per organ ─────────────────────────────
+  sHead('Clinical Records', 'UniTox · FDA');
 
   const clinical = lastResult.clinical || {};
   if (!clinical.found) {
-    doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
-    gray(); doc.text('Drug not found in UniTox clinical database. AI prediction is the sole data source.', M, y);
-    y += 10;
+    doc.setFont('helvetica','italic'); doc.setFontSize(8.5);
+    gray(); doc.text('Not found in UniTox. AI prediction is the sole data source.', M, y);
+    y += 8;
   } else {
     (clinical.organs || []).forEach(org => {
-      // organ name
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-      black(); doc.text(org.name, M, y);
+      // bullet + organ name
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+      black(); doc.text('• ' + org.name, M, y);
 
-      // status
-      if (org.rating === 'toxic')        red();
-      else if (org.rating === 'safe')    green();
-      else                               gray();
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-      doc.text(org.rating.toUpperCase(), M + 35, y);
+      // status label
+      if      (org.rating==='toxic')   red();
+      else if (org.rating==='safe')    green();
+      else                             gray();
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+      doc.text(org.rating.toUpperCase(), M+38, y);
 
-      // reasoning
+      // short reason — first sentence only, max 90 chars
       if (org.reasoning && !org.reasoning.startsWith('[Demo]') && org.reasoning !== 'No details available.') {
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
-        dgray();
-        const rLines = doc.splitTextToSize(org.reasoning, col - 55);
-        doc.text(rLines, M + 55, y);
-        y += Math.max(rLines.length * 3.5, 5);
-      } else {
-        y += 5;
+        const firstSentence = org.reasoning.split(/[.!?]/)[0].trim().slice(0, 90) + '.';
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+        dgray(); doc.text(firstSentence, M+58, y);
       }
-      y += 2;
+      y += 6;
     });
   }
-  y += 4; line(y); y += 7;
+  y += 3; line(y); y += 6;
 
-  // ── AI PREDICTIONS ────────────────────────────────────────────────────────
-  sHead('AI Molecular Risk Predictions', 'Source: Tox21 · Random Forest Model');
+  // ── AI PREDICTIONS — top 6 only ───────────────────────────────────────────
+  sHead('AI Risk Predictions (Top 6)', 'Tox21 · Random Forest');
 
-  (lastResult.ai_risks || []).forEach(r => {
+  const top6 = (lastResult.ai_risks || []).slice(0, 6);
+  top6.forEach(r => {
     const pct = r.risk_pct ?? 0;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
-    black(); doc.text(r.effect || r.assay || '—', M, y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    black(); doc.text('• ' + (r.effect || r.assay || '—'), M, y);
 
-    // simple bar
-    const bx = M + 85, bw = 55, bh = 3, by = y - 3;
-    doc.setFillColor(225, 225, 225); doc.rect(bx, by, bw, bh, 'F');
-    if      (pct > 50) doc.setFillColor(180, 30,  50);
-    else if (pct > 25) doc.setFillColor(180, 110, 0);
-    else               doc.setFillColor(0,   140, 70);
-    doc.rect(bx, by, bw * (pct / 100), bh, 'F');
+    // bar
+    const bx=M+88, bw=48, bh=2.5, by=y-2.5;
+    doc.setFillColor(225,225,225); doc.rect(bx, by, bw, bh, 'F');
+    if      (pct>50) doc.setFillColor(180,30,50);
+    else if (pct>25) doc.setFillColor(180,110,0);
+    else             doc.setFillColor(0,140,70);
+    doc.rect(bx, by, bw*(pct/100), bh, 'F');
 
-    // pct text
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-    if      (pct > 50) red();
-    else if (pct > 25) amber();
-    else               green();
-    doc.text(pct.toFixed(1) + '%', bx + bw + 3, y);
-    y += 7;
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    if      (pct>50) red();
+    else if (pct>25) amber();
+    else             green();
+    doc.text(pct.toFixed(1)+'%', bx+bw+3, y);
+    y += 6;
   });
 
-  y += 4; line(y); y += 7;
+  y += 3; line(y); y += 6;
 
-  // ── SUMMARY ───────────────────────────────────────────────────────────────
-  sHead('Analysis Summary', '');
+  // ── SUMMARY — 2 lines max ────────────────────────────────────────────────
+  sHead('Summary', '');
   const sumText = document.getElementById('summaryText').textContent;
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
   dgray();
   const sumLines = doc.splitTextToSize(sumText, col);
-  doc.text(sumLines, M, y);
-  y += sumLines.length * 5 + 8;
+  doc.text(sumLines.slice(0, 3), M, y);
+  y += Math.min(sumLines.length, 3) * 5 + 6;
 
   // ── DISCLAIMER ────────────────────────────────────────────────────────────
-  y = Math.max(y, 255);
-  doc.setFillColor(255, 251, 240);
-  doc.rect(M, y, col, 22, 'F');
-  doc.setDrawColor(200, 160, 0); doc.setLineWidth(0.4);
-  doc.rect(M, y, col, 22, 'S');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-  amber(); doc.text('DISCLAIMER', M + 4, y + 6);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+  y = Math.max(y, 248);
+  doc.setFillColor(255,251,240); doc.rect(M, y, col, 18, 'F');
+  doc.setDrawColor(200,160,0); doc.setLineWidth(0.3); doc.rect(M, y, col, 18, 'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+  amber(); doc.text('DISCLAIMER', M+4, y+5.5);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7);
   dgray();
-  const disc = 'This report is generated by DeepTox, a research prototype. It is NOT a validated clinical tool and must not be used for any medical or pharmaceutical decisions. Predictions are probabilistic estimates based on in-vitro data. Always consult qualified medical professionals.';
-  doc.text(doc.splitTextToSize(disc, col - 8), M + 4, y + 12);
+  const disc = 'DeepTox is a research prototype. NOT a validated clinical tool. Do not use for medical decisions. Always consult qualified professionals.';
+  doc.text(doc.splitTextToSize(disc, col-8), M+4, y+11);
 
   // ── FOOTER ────────────────────────────────────────────────────────────────
-  doc.setFillColor(245, 248, 252); doc.rect(0, 285, W, 12, 'F');
-  doc.setFillColor(0, 140, 70);    doc.rect(0, 285, W, 0.8, 'F');
-  gray(); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-  doc.text('DeepTox · Hybrid AI Toxicity Prediction System · Research Prototype · Not for clinical use', M, 291);
-  doc.text('Page 1 of 1', W - M, 291, { align: 'right' });
+  doc.setFillColor(245,248,252); doc.rect(0,285,W,12,'F');
+  doc.setFillColor(0,140,70);   doc.rect(0,285,W,0.8,'F');
+  gray(); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  doc.text('DeepTox · Hybrid AI Toxicity Prediction System · Research Prototype', M, 291);
+  doc.text('Page 1 of 1', W-M, 291, {align:'right'});
 
-  // ── SAVE ─────────────────────────────────────────────────────────────────
+  // ── SAVE ──────────────────────────────────────────────────────────────────
   const fname = `DeepTox_Report_${(lastResult.name||'compound').replace(/\s+/g,'_')}_${now.toISOString().slice(0,10)}.pdf`;
   doc.save(fname);
 }
