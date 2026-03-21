@@ -8,19 +8,19 @@
 
 ## 📌 Table of Contents
 
-- [Problem Statement](#problem-statement)
-- [About the Project](#about-the-project)
-- [Demo Video](#demo-video)
-- [Live Demo](#live-demo)
-- [How It Works](#how-it-works)
-- [Tech Stack](#tech-stack)
-- [Datasets Used](#datasets-used)
-- [ML Model and Training](#ml-model-and-training)
-- [Folder Structure](#folder-structure)
-- [Run Locally](#run-locally)
-- [Features](#features)
-- [Disclaimer](#disclaimer)
-- [Author](#author)
+- [Problem Statement](#-problem-statement)
+- [About the Project](#-about-the-project)
+- [Demo Video](#-demo-video)
+- [Live Demo](#-live-demo)
+- [How It Works](#️-how-it-works)
+- [Tech Stack](#️-tech-stack)
+- [Datasets Used](#-datasets-used)
+- [ML Model and Training](#-ml-model-and-training)
+- [Folder Structure](#-folder-structure)
+- [Run Locally](#-run-locally)
+- [Features](#-features)
+- [Disclaimer](#️-disclaimer)
+- [Author](#️-author)
 
 ---
 
