@@ -260,7 +260,20 @@ html.light .icon-sun  { opacity: 1; }
 .tox-status.toxic   { background: rgba(255,77,109,.1); color: var(--red);   border: 1px solid rgba(255,77,109,.2); }
 .tox-status.safe    { background: rgba(0,255,136,.1);  color: var(--green); border: 1px solid rgba(0,255,136,.2); }
 .tox-status.unknown { background: rgba(122,155,191,.08); color: var(--text2); border: 1px solid var(--border); }
-.tox-reasoning { font-family: var(--font-mono); font-size: 11px; color: var(--text3); line-height: 1.6; padding-left: 2px; }
+.tox-reasoning-wrap { margin-top: 6px; }
+.tox-reasoning {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text3);
+  line-height: 1.6; padding-left: 2px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; transition: all .3s;
+}
+.tox-reasoning.expanded { display: block; -webkit-line-clamp: unset; }
+.tox-expand-btn {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .5px;
+  color: var(--cyan); cursor: pointer; background: none; border: none;
+  padding: 3px 0; margin-top: 2px; transition: color .2s;
+}
+.tox-expand-btn:hover { color: var(--green); }
 
 /* AI bars */
 .risk-bar-wrap { margin-bottom: 14px; }
@@ -1359,15 +1372,21 @@ function renderResults(data) {
         AI prediction is the sole data source for this compound.
       </div>`;
   } else {
-    clinBody.innerHTML = (clinical.organs || []).map(org => `
+    clinBody.innerHTML = (clinical.organs || []).map((org, i) => {
+      const hasReasoning = org.reasoning && org.reasoning !== 'No details available.' && org.reasoning !== 'nan' && !org.reasoning.startsWith('[Demo]');
+      return `
       <div class="tox-row">
         <div class="tox-row-top">
           <span class="tox-organ">${org.name}</span>
           <span class="tox-status ${org.rating}">${capitalise(org.rating)}</span>
         </div>
-        ${org.reasoning && org.reasoning !== 'No details available.' && org.reasoning !== 'nan'
-          ? `<div class="tox-reasoning">${org.reasoning}</div>` : ''}
-      </div>`).join('');
+        ${hasReasoning ? `
+          <div class="tox-reasoning-wrap">
+            <div class="tox-reasoning" id="reason-${i}">${org.reasoning}</div>
+            <button class="tox-expand-btn" id="expand-${i}" onclick="toggleReason(${i})">▾ Show full reasoning</button>
+          </div>` : ''}
+      </div>`;
+    }).join('');
   }
 
   // ── AI card ────────────────────────────────────────────────────────────────
@@ -1444,6 +1463,13 @@ function generateDemoData(name) {
              : `[Demo] Insufficient data in current dataset.`
   }));
   return { name, smiles: '[Demo] Connect Flask for real SMILES', clinical: { found: !!map[k], organs }, ai_risks, overall_risk: d.overall };
+}
+
+function toggleReason(i) {
+  const box = document.getElementById(`reason-${i}`);
+  const btn = document.getElementById(`expand-${i}`);
+  const expanded = box.classList.toggle('expanded');
+  btn.textContent = expanded ? '▴ Show less' : '▾ Show full reasoning';
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
