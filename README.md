@@ -293,5 +293,5 @@ LinkedIn: https://www.linkedin.com/in/aditya-kumar-b7920b328
 ---
 
 <div align="center">
-  <sub>Built with 🧬 by Aditya Kumar · © 2025 DeepTox · Research Prototype</sub>
+  <sub>Built with 🧬 by Aditya Kumar · © 2026 DeepTox · Research Prototype</sub>
 </div>
